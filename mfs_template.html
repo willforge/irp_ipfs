@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<meta charset="utf-8">
+	<title>Mfs Files Management</title>
+	<link rel="stylesheet" href="style.css"> 
+	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
+	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+  <script src="functionScript.js"></script>
+</head>
+
+<body>
+
+<div id=inputdiv>
+<h2>Inputs</h2>
+mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
+</div>
+<hr>
+<div id=outputdiv>
+<h2>Outputs</h2>
+<table id=directory_contentid border=1>
+    <tr><th colspan=4><h4 id="h3-title" class="whiteOnDarkBlue">directorypath</h4></th>
+    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th>
+    <tr id=row0 class=ls_row_class style="display:none">
+    <td class=pin_status_class>unpinned</td>
+    <td class=file_type_class>file</td>
+    <td class=file_name_class>myfile.txt</td>
+    <td class=file_hash_class>Qm12345</td>
+    </tr>
+</table>
+<div>
+<table id=file_attributesid border=1>
+    <tr><th colspan=4><h4 id="h3-title" class="whiteOnDarkBlue">filepath</h4></th>
+    <tr><th>pin</th><th><th>hash</th>
+    <tr id=row0 class=file_row_class style="display:none">
+    <td class=pin_status_class>unpinned</td>
+    <td class=file_hash_class>Qm12345</td>
+    </tr>
+</table>
+content:<br><textarea id=file_contentid>file's content</textarea>
+<div>
+
+</div>
+
+</body>
+
+<script>
+// mapping ID -> function
+var outputs = {
+  'directory_contentid': display_directory_content
+}
+
+var stored = {};
+
+
+
+// main build
+
+// all async function NEEDs to return the promise
+
+// IRP Rules :
+// -----------
+// no (variable) parameter in provide
+// only builds have arguments...
+// getdata can also have arguments (leaves)
+// display* function are outputs
+// build and display are NOT async function (not promises)
+
+
+main();
+async function main() {
+// provide input :
+let mfs_path = getInputValue('mfs_pathinputid');
+var stat = await getStatofMfsPath(mfs_path);
+console.log('stat: ',stat);
+
+if (stat.Type == 'directory') {
+  display_directory_content();
+} else if (stat.Type == 'file') {
+  display_file_content();
+}
+
+}
+
+async function display_directory_content() {
+  console.log('entered display_directory_content!')
+  let table = await provide_directory_content();
+  let oe = document.getElementById('display_contentid')
+  
+  let mfs_path = table.dirname
+  let table_of_content = table.TOC
+
+  for (item of table_of_content) {
+   console.log('display_directory_content.item:',item)
+   stored['item'] = item;
+   stored['item'].DirName = mfs_path;
+   let filename = item.Name
+   let pin_status = await providePinStatus('item') // provide
+   let hash = item.Hash
+   let type = item.Type
+   let size = item.Size
+   // affiche_row(pin_status,filename,hash,type);
+   console.log('row: ',pin_status,filename,hash,type);
+ }
+
+}
+
+async function display_file_content() {
+ console.log('entered affiche_file_content!')
+
+}
+
+</script>
+
+</html>
