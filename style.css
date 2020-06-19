@@ -1,0 +1,26 @@
+h1,h2,h3 {
+  background-color: rgb(230, 220, 245);
+}
+table {
+  border: 1px solid black;
+  font: 16px "Open Sans", Helvetica, Arial, sans-serif;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+thead > tr {
+  background-color: rgb(228, 240, 245);
+  text-align: center;
+}
+tbody > tr:nth-child(odd) {
+    background-color: #eee;
+}
+th {
+  vertical-align: bottom;
+}
+
+th, td {
+  border: 1px solid black;
+  padding:4px 6px;
+}
+

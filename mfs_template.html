@@ -6,7 +6,6 @@
 	<link rel="stylesheet" href="style.css"> 
 	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
 	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
-  <script src="functionScript.js"></script>
 </head>
 
 <body>
@@ -14,27 +13,33 @@
 <div id=inputdiv>
 <h2>Inputs</h2>
 mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
+<button type=button onclick="display()">display</a>
 </div>
 <hr>
 <div id=outputdiv>
 <h2>Outputs</h2>
 <table id=directory_contentid border=1>
-    <tr><th colspan=4><h4 id="h3-title" class="whiteOnDarkBlue">directorypath</h4></th>
-    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th>
-    <tr id=row0 class=ls_row_class style="display:none">
-    <td class=pin_status_class>unpinned</td>
-    <td class=file_type_class>file</td>
-    <td class=file_name_class>myfile.txt</td>
-    <td class=file_hash_class>Qm12345</td>
+    <thead>
+    <tr><th colspan=4><h4 id="h3-title" class="whiteOnDarkBlue">directorypath</h4></th></tr>
+    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th></tr>
+    </thead>
+    <tbody>
+    <tr id=row0 class=ls_row">
+    <td class=pin_status onclick="">pinStatus</a></td>
+    <td class=file_type>fileType</td>
+    <td class=file_name>fileName</td>
+    <td class=file_hash><a class=file_hash_link href=#>QmHash</a></td>
     </tr>
+    </tbody>
 </table>
 <div>
+<hr>
 <table id=file_attributesid border=1>
     <tr><th colspan=4><h4 id="h3-title" class="whiteOnDarkBlue">filepath</h4></th>
     <tr><th>pin</th><th><th>hash</th>
     <tr id=row0 class=file_row_class style="display:none">
-    <td class=pin_status_class>unpinned</td>
-    <td class=file_hash_class>Qm12345</td>
+    <td class=pin_status_cell>unpinned</td>
+    <td class=file_hash_cell><a href=#>Qm12345</a></td>
     </tr>
 </table>
 content:<br><textarea id=file_contentid>file's content</textarea>
@@ -44,11 +49,14 @@ content:<br><textarea id=file_contentid>file's content</textarea>
 
 </body>
 
+<script src="functionScript.js"></script>
 <script>
 // mapping ID -> function
-var outputs = {
+const outputs = {
   'directory_contentid': display_directory_content
 }
+// type mapping
+const typenames = [ 'file','dir','link','others','...' ]
 
 var stored = {};
 
@@ -67,8 +75,8 @@ var stored = {};
 // build and display are NOT async function (not promises)
 
 
-main();
-async function main() {
+display();
+async function display() {
 // provide input :
 let mfs_path = getInputValue('mfs_pathinputid');
 var stat = await getStatofMfsPath(mfs_path);
@@ -90,19 +98,57 @@ async function display_directory_content() {
   let mfs_path = table.dirname
   let table_of_content = table.TOC
 
+  clear_display_directory_content();
+
   for (item of table_of_content) {
    console.log('display_directory_content.item:',item)
    stored['item'] = item;
-   stored['item'].DirName = mfs_path;
+   stored['item'].DirName = mfs_path; // is it ok for IRP ?
    let filename = item.Name
    let pin_status = await providePinStatus('item') // provide
    let hash = item.Hash
    let type = item.Type
    let size = item.Size
-   // affiche_row(pin_status,filename,hash,type);
    console.log('row: ',pin_status,filename,hash,type);
+   display_row(pin_status,filename,hash,type);
  }
+ te = document.getElementById('directory_contentid')
+ console.log('table: '+ te.rows.length + ' rows')
 
+}
+
+function clear_display_directory_content() {
+   let e = document.getElementById('directory_contentid');
+   console.log('template row:',e.rows[2])
+   //e.rows[2].style.display='none'
+   
+   console.log('nrow before delete:',e.rows.length)
+   for (i = 4; i < e.rows.length; i++) {
+     e.deleteRow(i)
+   }
+   console.log('nrow after delete:',e.rows.length)
+}
+
+function display_row(status,filename,hash,type) {
+   console.log('affiche_row:',filename)
+   let e = document.getElementById('directory_contentid');
+   let last = e.rows.length-1
+   let row = e.rows[last];
+   //let newrow = e.insertRow(2); // insert in position 2
+   let newrow = e.insertRow(-1); // insert in last position
+   newrow.innerHTML = row.innerHTML;
+   let button = newrow.getElementsByClassName('pin_status')[0]
+     button.innerHTML = status;
+     button.onclick = function() { console.log('toggle :'+status); }
+   newrow.getElementsByClassName('file_name')[0].innerHTML = filename;
+
+   let link=newrow.getElementsByClassName('file_hash_link')[0]
+     link.href = 'http://localhost:8080/ipfs/'+hash
+     link.innerHTML = hash;
+
+   newrow.getElementsByClassName('file_type')[0].innerHTML = typenames[type];
+   console.log('newrow: ',newrow);
+ 
 }
 
 async function display_file_content() {
