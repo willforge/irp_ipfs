@@ -41,13 +41,46 @@ function build_directory_content(mfs_path) {
    .catch( obj => { logError('build_directory_content.catch',obj) })
 }
 
-async function providePinStatus(item) {
+async function provideItem(ofwhat) {
+  if (typeof(stored[ofwhat]) != 'undefined') {  
+    return stored[ofwhat]
+  } else {
+    throw "Error: "+ofwhat+" not previously stored !";
+  }
+}
+async function providePinStatus(ofwhat) {
+  let hash;
+  if (ofwhat == 'item') {
+   hash = stored[ofwhat].Hash;
+/*
   let dirname = stored[item].DirName;
   let filename = stored[item].Name;
-  let hash = stored[item].Hash;
-   let mfs_path = dirname+'/'+filename
-   let pin_status = await getPinStatus(hash);
-   return pin_status;
+  let mfs_path = dirname+'/'+filename
+*/
+  } else if (ofwhat == 'curFile') {
+    hash = await provideHashofMfsPath('curFile')
+  }
+  let pin_status = await getPinStatus(hash);
+  return pin_status;
+}
+
+async function provideHashofMfsPath(ofwhat) {
+  if (typeof(stored[ofwhat].hash) != 'undefined') {  
+    return stored[ofwhat].hash
+  } else {
+     let mfs_path = stored[ofwhat].mfs_path
+     console.log('provideHashof....stored['+ofwhat+']: ',stored[ofwhat]);
+     console.log('provideHashof....mfs_path: ',mfs_path);
+     let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
+     let hash = await fetchGetPostJson(url) // buid/get
+     .then( json => {
+         stored[ofwhat].hash = json.Hash
+         return json.Hash
+     })
+     .catch( console.error )
+
+     return hash;
+  }
 }
 
 function getPinStatus(hash) { // getdata
@@ -66,6 +99,9 @@ function getPinStatus(hash) { // getdata
    .catch( obj => { logError('getPinStatus.catch',obj) })
 }
 
-
+function getContentofMfsPath(mfsPath) {
+   let  url = api_url + 'files/read?arg='+mfsPath
+   return fetchRespCatch(url)
+}
 
 
