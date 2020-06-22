@@ -35,7 +35,7 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
 <div>
 <hr>
 <table id=file_attributesid border=1>
-    <tr><th colspan=2><h4 id="h3-title" class="whiteOnDarkBlue">filepath</h4></th>
+    <tr><th colspan=2><h4 id="file_pathid" class="whiteOnDarkBlue">filepath</h4></th>
     <tr><th>pin</th><th>hash</th>
     <tr id=file_row0id class=file_row_class>
     <td class=pin_status_cell>unpinned</td>
@@ -117,7 +117,7 @@ async function display_directory_content() {
    let filename = item.Name
    stored['item'] = item;
    let pin_status = await providePinStatus('item') // provide
-       item.Status = pin_status
+   item.Status = pin_status
    let hash = item.Hash
    let type = item.Type
    let size = item.Size
@@ -126,7 +126,7 @@ async function display_directory_content() {
    item.Path = mfs_path + filename;
 
    console.log('row: ',pin_status,filename,hash,type);
-   display_row(item); // /!\ problem w/ promise !
+   display_row(item); // /!\ problem w/ promise ???
  }
  console.log('table: '+ te.rows.length + ' rows')
 
@@ -137,11 +137,10 @@ function clear_display_directory_content() {
    console.log('template row:',e.rows[2])
    //e.rows[2].style.display='none'
    
-   console.log('nrow before delete:',e.rows.length)
    for (i = e.rows.length-1; i > 2; i--) {
      e.deleteRow(i)
    }
-   console.log('nrow after delete:',e.rows.length)
+   //console.log('nrow after delete:',e.rows.length)
 }
 
 function display_row(item) {
@@ -153,8 +152,9 @@ function display_row(item) {
    let newrow = e.insertRow(-1); // insert in last position
    newrow.innerHTML = row.innerHTML; // copy previous row content
 
+   let status = item.Status
    let button = newrow.getElementsByClassName('pin_status')[0]
-     button.innerHTML = item.Status
+     button.innerHTML = status;
      button.onclick = function() { console.log('toggle :'+status); }
    
    let file_name_click=newrow.getElementsByClassName('file_name_click')[0]
@@ -176,17 +176,24 @@ function display_row(item) {
 }
 
 async function display_file_content() {
+ 
  console.log('entered display_file_content!')
  let content = await provide_file_content();
+ console.log('display_file_content.stored[curFile]: ',stored['curFile'])
  let item = provideItem('curFile')
  console.log('item: ',item)
+ console.log('item.Name: ',item.Name)
 
  let pin_status = item.Status
+ console.log('item.Status: ',item.Status)
+ 
  let hash = item.Hash
+
+ document.getElementById('file_pathid').innerHTML = item.Path
 
  let row = document.getElementById('file_attributesid').rows[2];
  console.log('display_file_content.row: ',row);
- row.getElementsByClassName('pin_status_cell')[0].value = pin_status;
+ row.getElementsByClassName('pin_status_cell')[0].innerHTML = pin_status;
  
 
  let link = row.getElementsByClassName('file_hash_link')[0]

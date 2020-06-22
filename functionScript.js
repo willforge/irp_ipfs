@@ -41,7 +41,7 @@ function build_directory_content(mfs_path) {
    .catch( obj => { logError('build_directory_content.catch',obj) })
 }
 
-async function provideItem(ofwhat) {
+function provideItem(ofwhat) {
   if (typeof(stored[ofwhat]) != 'undefined') {  
     return stored[ofwhat]
   } else {
@@ -51,17 +51,19 @@ async function provideItem(ofwhat) {
 async function providePinStatus(ofwhat) {
   let hash;
   if (ofwhat == 'item') {
-   hash = stored[ofwhat].Hash;
+     hash = stored[ofwhat].Hash;
+     let pin_status = await getPinStatus(hash);
+     return pin_status;
+  }
 /*
+  else if (ofwhat == 'curFile') {
+    hash = await provideHashofMfsPath('curFile')
+  }
   let dirname = stored[item].DirName;
   let filename = stored[item].Name;
   let mfs_path = dirname+'/'+filename
+
 */
-  } else if (ofwhat == 'curFile') {
-    hash = await provideHashofMfsPath('curFile')
-  }
-  let pin_status = await getPinStatus(hash);
-  return pin_status;
 }
 
 async function provideHashofMfsPath(ofwhat) {
@@ -94,7 +96,7 @@ function getPinStatus(hash) { // getdata
          status = 'unpinned'
        }
        console.log('getPinStatus: '+hash+" \u21A6",status);
-       return status
+       return Promise.resolve(status)
    })
    .catch( obj => { logError('getPinStatus.catch',obj) })
 }
