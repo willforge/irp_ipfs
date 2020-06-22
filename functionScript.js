@@ -101,6 +101,37 @@ function getPinStatus(hash) { // getdata
    .catch( obj => { logError('getPinStatus.catch',obj) })
 }
 
+function togglePinStatus(status, hash) {
+   if (status == 'unpinned' || status == 'indirect-through') {
+      return ipfsPinAdd(hash)
+      .then( _ => { return getPinStatus(hash)})
+
+   } else if (status == 'direct' || status == 'recursive' || status == 'indirect-through')  {
+      return ipfsPinRm(hash)
+      .then( _ => { return getPinStatus(hash)})
+   } else {
+      console.log('togglePinStatus.status:',status);
+      return '???'
+   }
+}
+function ipfsPinAdd(hash) {
+   let url = api_url + 'pin/add?arg=/ipfs/'+hash+'&progress=true'
+   return fetchGetPostText(url)
+   .then(text => { console.log('ipfsPinAdd.text',text); })
+   .catch(err => console.error(err, hash))
+}
+
+function ipfsPinRm(hash) {
+     let url = api_url + 'pin/rm?arg=/ipfs/'+hash
+     console.log('ipfsPinRm.url',url)
+     return fetchGetPostJson(url)
+	 .then( json => { console.log('ipfsPinRm.json',json);
+	     return json.Pins  // Improve when recursive ?
+	 })
+	 .catch(err => console.error(err, hash))
+ } 
+ 
+
 function getContentofMfsPath(mfsPath) {
    let  url = api_url + 'files/read?arg='+mfsPath
    return fetchRespCatch(url)
