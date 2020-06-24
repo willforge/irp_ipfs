@@ -73,6 +73,9 @@ var stored = {};
 // getdata can also have arguments (leaves)
 // display* function are outputs
 // build and display are NOT async function (not promises)
+//
+// (external) provide that requires a fetch can be done via an async
+// getdata* which do the fetch are promises
 
 
 display();
@@ -100,14 +103,6 @@ async function display_directory_content() {
   let mfs_path = table.dirname
   document.getElementById('directory_pathid').innerHTML = mfs_path
 
-  /*
-  let divs = document.getElementsByTagName('div')
-  let h4 = divs.outputdivid.getElementsByTagName('h4').directory_pathid
-  console.log('h4:',h4) // this works too !
-  */
-  
-
-
   clear_display_directory_content();
 
   for (item of table_of_content) {
@@ -116,8 +111,10 @@ async function display_directory_content() {
    item.DirName = mfs_path; 
    let filename = item.Name
    stored['item'] = item;
+  
    let pin_status = await providePinStatus('item') // provide
    item.Status = pin_status
+
    let hash = item.Hash
    let type = item.Type
    let size = item.Size
@@ -131,6 +128,7 @@ async function display_directory_content() {
  console.log('table: '+ te.rows.length + ' rows')
 
 }
+
 
 function clear_display_directory_content() {
    let e = document.getElementById('directory_contentid');
@@ -152,18 +150,17 @@ function display_row(item) {
    let newrow = e.insertRow(-1); // insert in last position
    newrow.innerHTML = row.innerHTML; // copy previous row content
 
-   let status = item.Status
    let button = newrow.getElementsByClassName('pin_status')[0]
-     button.innerHTML = status;
+     button.innerHTML = item.Status;
      button.className = 'pin_status '+item.Hash
      button.onclick = function() {
-       return togglePinStatus(status,item.Hash)
+       return togglePinStatus(item.Status,item.Hash)
        .then( status => {  
+         item.Status = status
+         //stored['curFile'].Status = status
          let elems = document.getElementsByClassName(item.Hash)
          for (let e of elems) {
            e.innerHTML = status
-           //item.Status = status
-           stored['curFile'].Status = status
          }
         })
 
@@ -188,6 +185,8 @@ function display_row(item) {
    console.log('newrow: ',newrow);
  
 }
+
+
 
 async function display_file_content() {
  
@@ -219,10 +218,6 @@ async function display_file_content() {
  document.getElementById('file_contentid').value = content;
 }
 
-function provide_file_content() {
-  let mfs_path = getInputValue('mfs_pathinputid');
-  return getContentofMfsPath(mfs_path);
-}
 
 </script>
 
