@@ -90,16 +90,40 @@ async function providePinStatusThrough(ofwhat) {
      let pin_split_status = splitPinFullStatus(pin_full_status)
      return pin_split_status;
   }
-/*
-  else if (ofwhat == 'curFile') {
-    hash = await provideHashofMfsPath('curFile')
-  }
-  let dirname = stored[item].DirName;
-  let filename = stored[item].Name;
-  let mfs_path = dirname+'/'+filename
-
-*/
 }
+async function providePinStatus(ofwhat) {
+   let pin_status;
+   [pin_status, _] = await providePinStatusThrough(ofwhat) // provide
+   return pin_status;
+
+}
+async function provideThrough(ofwhat) {
+   let pin_through;
+   [_,pin_through] = await providePinStatusThrough(ofwhat) // provide
+   return pin_through;
+}
+
+function splitPinFullStatus(fullstatus) {
+  let matches = fullstatus.match(/(\w+)\s+through (\w+)/)
+  //console.log('splitPFS.matches: ',matches)
+  let pin_status
+  let qm_through
+  if (matches) {
+     pin_status = matches[1]
+     qm_through = matches[2]
+     console.log('through-qm: '+qm_through )
+  } else {
+     pin_status = fullstatus
+     if (pin_status == 'unpinned') {
+       qm_through = 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'
+     } else {
+       qm_through = null
+     }
+  }
+  console.log('splitPFS: ',[pin_status,qm_through])
+  return [pin_status,qm_through]
+}
+
 
 async function provideHashofMfsPath(ofwhat) {
   if (typeof(stored[ofwhat].Hash) != 'undefined') {  

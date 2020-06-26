@@ -84,8 +84,9 @@ var stored = {};
 // getdata do the clean 
 
 
-// NOTE FOR NEXT TIME :
+// NOTE FOR NEXT TIME (TBD) :
 // allow /ipfs/Qm1234 in mfs: input
+// add toggle to pin cell in file table 
 
 display();
 async function display() {
@@ -121,10 +122,6 @@ async function display_directory_content() {
    stored['item'] = item;
   
    item.FullStatus = await providePinFullStatus('item')
-   /* 
-   item.Status = await providePinStatus('item')
-   item.Through = await provideThrough('item')
-   */
 
    let hash = item.Hash
    let type = item.Type
@@ -138,40 +135,6 @@ async function display_directory_content() {
  }
  console.log('table: '+ te.rows.length + ' rows')
 
-}
-
-
-async function providePinStatus(ofwhat) {
-   let pin_status;
-   [pin_status, _] = await providePinStatusThrough(ofwhat) // provide
-   return pin_status;
-
-}
-async function provideThrough(ofwhat) {
-   let pin_through;
-   [_,pin_through] = await providePinStatusThrough(ofwhat) // provide
-   return pin_through;
-}
-
-function splitPinFullStatus(fullstatus) {
-  let matches = fullstatus.match(/(\w+)\s+through (\w+)/)
-  //console.log('splitPFS.matches: ',matches)
-  let pin_status
-  let qm_through
-  if (matches) {
-     pin_status = matches[1]
-     qm_through = matches[2]
-     console.log('through-qm: '+qm_through )
-  } else {
-     pin_status = fullstatus
-     if (pin_status == 'unpinned') {
-       qm_through = 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'
-     } else {
-       qm_through = null
-     }
-  }
-  console.log('splitPFS: ',[pin_status,qm_through])
-  return [pin_status,qm_through]
 }
 
 function clear_display_directory_content() {
