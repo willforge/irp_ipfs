@@ -78,12 +78,17 @@ function provideItem(ofwhat) {
     throw "Error: "+ofwhat+" not previously stored !";
   }
 }
-async function providePinStatus(ofwhat) {
+function providePinFullStatus(ofwhat) {
+  let hash = stored[ofwhat].Hash;
+  return getPinStatus(hash);
+}
+async function providePinStatusThrough(ofwhat) {
   let hash;
   if (ofwhat == 'item') {
      hash = stored[ofwhat].Hash;
-     let pin_status = await getPinStatus(hash);
-     return pin_status;
+     let pin_full_status = await getPinStatus(hash);
+     let pin_split_status = splitPinFullStatus(pin_full_status)
+     return pin_split_status;
   }
 /*
   else if (ofwhat == 'curFile') {
@@ -132,19 +137,12 @@ function getPinStatus(hash) { // getdata
 }
 
 function togglePinStatus(status, hash) {
-   let matches = status.match(/through (\w+)/)
-   let qmthrough
-   if (matches) {
-     qmthrough = matches[1]
-     console.log('through-qm: '+qmthrough)
-     
-     status = 'indirect'
-   }
+   console.log('togglePinStatus.status.before:',status);
    if (status == 'unpinned' || status == 'indirect') {
       return ipfsPinAdd(hash)
       .then( _ => { return getPinStatus(hash)})
 
-   } else if (status == 'direct' || status == 'recursive' || status == 'indirect')  {
+   } else if (status == 'direct' || status == 'recursive' || status == 'indirect-not-through')  {
       return ipfsPinRm(hash)
       .then( _ => { return getPinStatus(hash)})
    } else {

@@ -25,7 +25,9 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
     </thead>
     <tbody>
     <tr id=dir_row0id class=ls_row">
-    <td class="pin_status QmHash" onclick="" >pinStatus</a></td>
+    <td class="pin_status">
+       <button class="pin_status_click QmHash" onclick="">pinStatus</button>
+       <span class="pin_status_span"> through <a href="#" class=pin_status_link>QmHash</a></span></td>
     <td class=file_type>fileType</td>
     <td class=file_name><a class=file_name_click href=#>fileName</a></td>
     <td class=file_hash><a class=file_hash_link href=#>QmHash</a></td>
@@ -77,6 +79,11 @@ var stored = {};
 // (external) provide that requires a fetch can be done via an async
 // getdata* which do the fetch are promises
 
+// provide create deps tree
+// provide check stored[]
+// build store in stored[]
+// getdata do the clean 
+
 
 display();
 async function display() {
@@ -97,7 +104,6 @@ async function display_directory_content() {
   console.log('entered display_directory_content!')
   let table = await provide_directory_content();
   let table_of_content = table.TOC
-
   let te = document.getElementById('directory_contentid')
   
   let mfs_path = table.dirname
@@ -112,8 +118,11 @@ async function display_directory_content() {
    let filename = item.Name
    stored['item'] = item;
   
-   let pin_status = await providePinStatus('item') // provide
-   item.Status = pin_status
+   item.FullStatus = await providePinFullStatus('item')
+   /* 
+   item.Status = await providePinStatus('item')
+   item.Through = await provideThrough('item')
+   */
 
    let hash = item.Hash
    let type = item.Type
@@ -122,13 +131,46 @@ async function display_directory_content() {
    if (type == 1) { filename += '/'; } // append a trailing / to directories
    item.Path = mfs_path + filename;
 
-   console.log('row: ',pin_status,filename,hash,type);
+   console.log('row: ',item.FullStatus,filename,hash,type);
    display_row(item); // /!\ problem w/ promise ???
  }
  console.log('table: '+ te.rows.length + ' rows')
 
 }
 
+
+async function providePinStatus(ofwhat) {
+   let pin_status;
+   [pin_status, _] = await providePinStatusThrough(ofwhat) // provide
+   return pin_status;
+
+}
+async function provideThrough(ofwhat) {
+   let pin_through;
+   [_,pin_through] = await providePinStatusThrough(ofwhat) // provide
+   return pin_through;
+}
+
+function splitPinFullStatus(fullstatus) {
+  let matches = fullstatus.match(/(\w+)\s+through (\w+)/)
+  //console.log('splitPFS.matches: ',matches)
+  let pin_status
+  let qm_through
+  if (matches) {
+     pin_status = matches[1]
+     qm_through = matches[2]
+     console.log('through-qm: '+qm_through )
+  } else {
+     pin_status = fullstatus
+     if (pin_status == 'unpinned') {
+       qm_through = 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'
+     } else {
+       qm_through = null
+     }
+  }
+  console.log('splitPFS: ',[pin_status,qm_through])
+  return [pin_status,qm_through]
+}
 
 function clear_display_directory_content() {
    let e = document.getElementById('directory_contentid');
@@ -141,6 +183,7 @@ function clear_display_directory_content() {
    //console.log('nrow after delete:',e.rows.length)
 }
 
+
 function display_row(item) {
  
    console.log('display_row:',item.Name)
@@ -149,26 +192,56 @@ function display_row(item) {
    let row = e.rows[last];
    let newrow = e.insertRow(-1); // insert in last position
    newrow.innerHTML = row.innerHTML; // copy previous row content
+   display_pin(item,newrow);
+   newrow.getElementsByClassName('file_type')[0].innerHTML = typenames[item.Type];
+   console.log('newrow: ',newrow);
+}
 
-   let button = newrow.getElementsByClassName('pin_status')[0]
-     button.innerHTML = item.Status;
-     button.className = 'pin_status '+item.Hash
+function display_pin(item,row) {
+
+   let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
+
+   let btnlink = row.getElementsByClassName('pin_status_link')[0]
+   let status_span_el = row.getElementsByClassName('pin_status_span')[0]
+
+   if (pin_status == 'indirect') {
+       btnlink.innerHTML = pin_through.substr(0,9);
+       btnlink.href = 'http://localhost:8080/ipfs/'+pin_through
+
+       status_span_el.style.display = ''; // display it !
+   } else {
+       status_span_el.style.display = 'none'
+   }
+
+   let button = row.getElementsByClassName('pin_status_click')[0]
+       button.innerHTML = pin_status
+       button.className = 'pin_status_click '+item.Hash
+
      button.onclick = function() {
-       return togglePinStatus(item.Status,item.Hash)
-       .then( status => {  
-         item.Status = status
-         //stored['curFile'].Status = status
+       let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
+       console.log('onclick.iten.FullStatus:',item.FullStatus);
+       console.log('onclick.cur_pin_status:',cur_pin_status);
+
+       return togglePinStatus(cur_pin_status,item.Hash)
+       .then( full_status => {  
+         item.FullStatus = full_status
+         let [new_pin_status,qm_through] = splitPinFullStatus(full_status)
+
          let elems = document.getElementsByClassName(item.Hash)
          for (let e of elems) {
-           e.innerHTML = status
+            e.innerHTML = new_pin_status
          }
-        })
+         if (new_pin_status == 'indirect') {
+            btnlink.innerHTML = qm_through.substr(0,9);
+            btnlink.href = 'http://localhost:8080/ipfs/'+qm_through
+            status_span_el.style.display = ''; // display it !
+         }
+
+       })
 
      }
 
-     //button.onclick = function() { console.log('toggle :'+status); }
-   
-   let file_name_click=newrow.getElementsByClassName('file_name_click')[0]
+   let file_name_click=row.getElementsByClassName('file_name_click')[0]
    file_name_click.onclick = function() {
      stored['curFile'] = item
      // invalidate irp_path (TBD)
@@ -177,16 +250,11 @@ function display_row(item) {
    }
    file_name_click.innerHTML = item.Name;
 
-   let link=newrow.getElementsByClassName('file_hash_link')[0]
-     link.href = 'http://localhost:8080/ipfs/'+item.Hash
-     link.innerHTML = item.Hash;
+   let fhlink=row.getElementsByClassName('file_hash_link')[0]
+     fhlink.href = 'http://localhost:8080/ipfs/'+item.Hash
+     fhlink.innerHTML = item.Hash;
 
-   newrow.getElementsByClassName('file_type')[0].innerHTML = typenames[item.Type];
-   console.log('newrow: ',newrow);
- 
 }
-
-
 
 async function display_file_content() {
  
