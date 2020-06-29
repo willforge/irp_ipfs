@@ -85,6 +85,9 @@ var stored = {};
 
 
 // NOTE FOR NEXT TIME (TBD) :
+
+// build dependency tree...
+// split root=/ipfs/Qm and mutable_path
 // allow /ipfs/Qm1234 in mfs: input
 // add toggle to pin cell in file table 
 
@@ -158,6 +161,20 @@ function display_row(item) {
    let newrow = e.insertRow(-1); // insert in last position
    newrow.innerHTML = row.innerHTML; // copy previous row content
    display_pin(item,newrow);
+
+   let file_name_click=newrow.getElementsByClassName('file_name_click')[0]
+   file_name_click.onclick = function() {
+     stored['curFile'] = item
+     // invalidate irp_path (TBD)
+     document.getElementById('mfs_pathinputid').value = item.Path
+     display()
+   }
+   file_name_click.innerHTML = item.Name;
+
+   let fhlink=newrow.getElementsByClassName('file_hash_link')[0]
+     fhlink.href = 'http://localhost:8080/ipfs/'+item.Hash
+     fhlink.innerHTML = item.Hash;
+
    newrow.getElementsByClassName('file_type')[0].innerHTML = typenames[item.Type];
    console.log('newrow: ',newrow);
 }
@@ -205,19 +222,6 @@ function display_pin(item,row) {
        })
 
      }
-
-   let file_name_click=row.getElementsByClassName('file_name_click')[0]
-   file_name_click.onclick = function() {
-     stored['curFile'] = item
-     // invalidate irp_path (TBD)
-     document.getElementById('mfs_pathinputid').value = item.Path
-     display()
-   }
-   file_name_click.innerHTML = item.Name;
-
-   let fhlink=row.getElementsByClassName('file_hash_link')[0]
-     fhlink.href = 'http://localhost:8080/ipfs/'+item.Hash
-     fhlink.innerHTML = item.Hash;
 
 }
 

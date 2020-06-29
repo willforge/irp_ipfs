@@ -1,6 +1,19 @@
 
 // assumed api_url is already defined ...
 
+if (typeof(ipfsversion) == 'undefined') {
+  var ipfsversion;
+  let url = api_url + 'version'
+  console.log('main.url: ',url);
+  ipfsversion = fetchGetPostJson(url).then(
+   obj => { console.log('main.version.obj: ',obj); return obj.Version; })
+  .catch(console.error)
+
+} else {
+  let [callee, caller] = functionNameJS();
+  console.log("TEST."+callee+'.ipfsversion: ',ipfsversion);
+}
+
 function getInputValue(id) {
   let e = document.getElementById(id);
   if (typeof(e) !=  'undefined') {
@@ -22,7 +35,9 @@ async function getStatofMfsPath(mfs_path) {
 
 async function provide_directory_content() {
   let mfs_path = getInputValue('mfs_pathinputid');
+  if () {
   mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
+  }
   
   // build directory content ...
   return build_directory_content(mfs_path);
@@ -30,14 +45,40 @@ async function provide_directory_content() {
 }
 
 function build_directory_content(mfs_path) {
+  let [callee, caller] = functionNameJS();
   let parent_path = mfs_path + '../';
-  if (mfs_path == '/') {
+  let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
+      console.log(callee+'.immutable: ',immutable)
+
+  if (mfs_path == '/' || immutable) {
   parent_path = '/';
   }
-  let promise_parent_hash = getHashofMfsPath(parent_path);
-  //console.log('buid_dc.parent_hash: '+parent_hash);
-  let url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
-  let promise_dir_content = fetchRespCatch(url)
+  console.log(callee+'.parent_path: '+parent_path)
+  let promise_parent_hash = getHashofMfsPath(parent_path)
+
+  let url; // .. long=true for IPFS 0.5
+  let promise_dir_content
+  if ( immutable ) {
+    url = api_url + 'file/ls?arg='+mfs_path
+    promise_dir_content = fetchRespCatch(url)
+    .then( json => {
+      console.log(callee+'.immutable.ls.json: ',json)
+      let hash = json.Arguments[mfs_path]
+      let content = json.Objects[hash].Links
+      console.log(callee+'.file.ls: ',content)
+      json.Entries = content; // map as if it was a "files/ls" API call
+      const typetonum = { 'Directory': 1,'File': 0 }
+      json.Entries.forEach( e => { e.Type = typetonum[e.Type]} )
+      return json;
+    })
+   
+  } else if ( ipfsversion == '0.4.22') {
+    url = api_url + 'files/ls?arg='+mfs_path+'&l=true&U=true'
+    promise_dir_content = fetchRespCatch(url)
+  } else {
+    url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
+    promise_dir_content = fetchRespCatch(url)
+  }
 
   return Promise.all([promise_parent_hash,promise_dir_content]) 
   .then(_ => {
@@ -130,8 +171,8 @@ async function provideHashofMfsPath(ofwhat) {
     return stored[ofwhat].Hash
   } else {
      let mfs_path = stored[ofwhat].mfs_path
-     console.log('provideHashof....stored['+ofwhat+']: ',stored[ofwhat]);
-     console.log('provideHashof....mfs_path: ',mfs_path);
+     console.log(callee+'.stored['+ofwhat+']: ',stored[ofwhat]);
+     console.log(callee+'.mfs_path: ',mfs_path);
      let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
      let hash = await fetchGetPostJson(url) // buid/get
      .then( json => {
