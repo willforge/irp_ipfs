@@ -35,7 +35,10 @@ async function getStatofMfsPath(mfs_path) {
 
 async function provide_directory_content() {
   let mfs_path = getInputValue('mfs_pathinputid');
-  if () {
+  let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
+  if (immutable) {
+  mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TDB
+  } else {
   mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
   }
   
