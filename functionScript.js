@@ -2,6 +2,10 @@
 // assumed api_url is already defined ...
 
 function getInputValue(id) {
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.id:',id);
+    
   let e = document.getElementById(id);
   if (typeof(e) !=  'undefined') {
     return e.value
@@ -11,34 +15,51 @@ function getInputValue(id) {
 }
 
 async function getStatofMfsPath(mfs_path) {
-   let url = api_url + 'files/stat?arg='+mfs_path+'&hash=true&type=true'
-   return fetchGetPostJson(url)
-   .then(obj => {
-    console.log('getStatofMfsPath.obj: ',obj);
-    return obj;
-    })
-   .catch(console.error)
-}  
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.mfs_path:',mfs_path);
+    
+    let url = api_url + 'files/stat?arg='+mfs_path+'&hash=true&type=true'
+    return fetchGetPostJson(url)
+	.then(obj => {
+	    console.log(caller+'.obj: ',obj);
+	    return obj;
+	})
+	.catch(console.error)
+	    }
 
 async function provide_directory_content() {
-  let mfs_path = getInputValue('mfs_pathinputid');
-  mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
-  
-  // build directory content ...
-  return build_directory_content(mfs_path);
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
 
+    let mfs_path = getInputValue('mfs_pathinputid');
+    console.log(callee+'.mfs_path:',mfs_path);
+    mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
+    console.log(callee+'.mfs_path after replace:',mfs_path);
+    
+    // build directory content ...
+    return build_directory_content(mfs_path);
+    
 }
 
 function build_directory_content(mfs_path) {
-  let parent_path = mfs_path + '../';
-  if (mfs_path == '/') {
-  parent_path = '/';
-  }
-  let promise_parent_hash = getHashofMfsPath(parent_path);
-  //console.log('buid_dc.parent_hash: '+parent_hash);
-  let url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
-  let promise_dir_content = fetchRespCatch(url)
-
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.mfs_path:',mfs_path);
+    
+    let parent_path = mfs_path + '../';
+    if (mfs_path == '/') {
+	parent_path = '/';
+    }
+    
+    let promise_parent_hash = getHashofMfsPath(parent_path);
+    console.log(caller+'promise_parent_hash: '+promise_parent_hash);
+// Error IPFS
+//    let url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
+    let url = api_url + 'files/ls?arg='+mfs_path+'&l=true&U=true'
+    
+    let promise_dir_content = fetchRespCatch(url)
+    
   return Promise.all([promise_parent_hash,promise_dir_content]) 
   .then(_ => {
      [parent_hash, obj] = _
@@ -58,93 +79,99 @@ function build_directory_content(mfs_path) {
    .catch( obj => { logError('build_directory_content.catch',obj) })
 }
 function getHashofMfsPath(mfs_path) {
-  let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
-  return fetchGetPostJson(url) // get
-     .then( json => {
-         return json.Hash
-     })
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.mfs_path:',mfs_path);
+    
+    let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
+    return fetchGetPostJson(url) // get
+	.then( json => {
+            return json.Hash
+	})
 }
 
 function provide_file_content() {
-  let mfs_path = getInputValue('mfs_pathinputid');
-  return getContentofMfsPath(mfs_path);
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+
+    let mfs_path = getInputValue('mfs_pathinputid');
+    return getContentofMfsPath(mfs_path);
 }
 
 
 function provideItem(ofwhat) {
-  if (typeof(stored[ofwhat]) != 'undefined') {  
-    return stored[ofwhat]
-  } else {
-    throw "Error: "+ofwhat+" not previously stored !";
-  }
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.ofwhat:',ofwhat);
+    
+    if (typeof(stored[ofwhat]) != 'undefined') {
+	console.log(callee+'.stored[ofwhat]',stored[ofwhat]);
+	return stored[ofwhat]
+    } else {
+	throw "Error: "+ofwhat+" not previously stored !";
+    }
 }
+
 function providePinFullStatus(ofwhat) {
-  let hash = stored[ofwhat].Hash;
-  return getPinStatus(hash);
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.ofwhat:',ofwhat);
+    
+    let hash = stored[ofwhat].Hash;
+    return getPinStatus(hash);
 }
+
 async function providePinStatusThrough(ofwhat) {
-  let hash;
-  if (ofwhat == 'item') {
-     hash = stored[ofwhat].Hash;
-     let pin_full_status = await getPinStatus(hash);
-     let pin_split_status = splitPinFullStatus(pin_full_status)
-     return pin_split_status;
-  }
-}
-async function providePinStatus(ofwhat) {
-   let pin_status;
-   [pin_status, _] = await providePinStatusThrough(ofwhat) // provide
-   return pin_status;
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.ofwhat:',ofwhat);
 
+    let hash;
+    if (ofwhat == 'item') {
+	hash = stored[ofwhat].Hash;
+	let pin_full_status = await getPinStatus(hash);
+	let pin_split_status = splitPinFullStatus(pin_full_status)
+	return pin_split_status;
+    }
+    /*
+      else if (ofwhat == 'curFile') {
+      hash = await provideHashofMfsPath('curFile')
+      }
+      let dirname = stored[item].DirName;
+      let filename = stored[item].Name;
+      let mfs_path = dirname+'/'+filename
+      
+*/
 }
-async function provideThrough(ofwhat) {
-   let pin_through;
-   [_,pin_through] = await providePinStatusThrough(ofwhat) // provide
-   return pin_through;
-}
-
-function splitPinFullStatus(fullstatus) {
-  let matches = fullstatus.match(/(\w+)\s+through (\w+)/)
-  //console.log('splitPFS.matches: ',matches)
-  let pin_status
-  let qm_through
-  if (matches) {
-     pin_status = matches[1]
-     qm_through = matches[2]
-     console.log('through-qm: '+qm_through )
-  } else {
-     pin_status = fullstatus
-     if (pin_status == 'unpinned') {
-       qm_through = 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'
-     } else {
-       qm_through = null
-     }
-  }
-  console.log('splitPFS: ',[pin_status,qm_through])
-  return [pin_status,qm_through]
-}
-
 
 async function provideHashofMfsPath(ofwhat) {
-  if (typeof(stored[ofwhat].Hash) != 'undefined') {  
-    return stored[ofwhat].Hash
-  } else {
-     let mfs_path = stored[ofwhat].mfs_path
-     console.log('provideHashof....stored['+ofwhat+']: ',stored[ofwhat]);
-     console.log('provideHashof....mfs_path: ',mfs_path);
-     let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
-     let hash = await fetchGetPostJson(url) // buid/get
-     .then( json => {
-         stored[ofwhat].Hash = json.Hash
-         return json.Hash
-     })
-     .catch( console.error )
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.ofwhat:',ofwhat);
 
-     return hash;
-  }
+    if (typeof(stored[ofwhat].Hash) != 'undefined') {  
+	return stored[ofwhat].Hash
+    } else {
+	let mfs_path = stored[ofwhat].mfs_path
+	console.log('provideHashof....stored['+ofwhat+']: ',stored[ofwhat]);
+	console.log('provideHashof....mfs_path: ',mfs_path);
+	let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
+	let hash = await fetchGetPostJson(url) // buid/get
+	    .then( json => {
+		stored[ofwhat].Hash = json.Hash
+		return json.Hash
+	    })
+	    .catch( console.error )
+		
+		return hash;
+    }
 }
 
 function getPinStatus(hash) { // getdata
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.hash:',hash);
+
    let  url = api_url + 'pin/ls?arg=/ipfs/'+hash+'&type=all'
    return fetchRespNoCatch(url)
    .then( obj => {
@@ -161,7 +188,11 @@ function getPinStatus(hash) { // getdata
 }
 
 function togglePinStatus(status, hash) {
-   console.log('togglePinStatus.status.before:',status);
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.status:',status);
+    console.log(callee+'.input.hash:',hash);
+    
    if (status == 'unpinned' || status == 'indirect') {
       return ipfsPinAdd(hash)
       .then( _ => { return getPinStatus(hash)})
@@ -177,25 +208,37 @@ function togglePinStatus(status, hash) {
 
 
 function ipfsPinAdd(hash) {
-   let url = api_url + 'pin/add?arg=/ipfs/'+hash+'&progress=true'
-   return fetchGetPostText(url)
-   .then(text => { console.log('ipfsPinAdd.text',text); })
-   .catch(err => console.error(err, hash))
-}
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.hash:',hash);
+
+    let url = api_url + 'pin/add?arg=/ipfs/'+hash+'&progress=true'
+    return fetchGetPostText(url)
+	.then(text => { console.log('ipfsPinAdd.text',text); })
+	.catch(err => console.error(err, hash))
+	    }
 
 function ipfsPinRm(hash) {
-     let url = api_url + 'pin/rm?arg=/ipfs/'+hash
-     console.log('ipfsPinRm.url',url)
-     return fetchGetPostJson(url)
-	 .then( json => { console.log('ipfsPinRm.json',json);
-	     return json.Pins  // Improve when recursive ?
-	 })
-	 .catch(err => console.error(err, hash))
- } 
- 
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.hash:',hash);
+
+    let url = api_url + 'pin/rm?arg=/ipfs/'+hash
+    console.log(caller+'.url:',url)
+    return fetchGetPostJson(url)
+	.then( json => { console.log('ipfsPinRm.json',json);
+			 return json.Pins  // Improve when recursive ?
+		       })
+	.catch(err => console.error(err, hash))
+	    } 
+
 
 function getContentofMfsPath(mfsPath) {
-   let  url = api_url + 'files/read?arg='+mfsPath
+    let [callee, caller] = functionNameJS();
+    console.log('Entering in',callee,'called by',caller);
+    console.log(callee+'.input.mfsPath:',mfsPath);
+
+    let  url = api_url + 'files/read?arg='+mfsPath
    return fetchRespCatch(url)
 }
 
