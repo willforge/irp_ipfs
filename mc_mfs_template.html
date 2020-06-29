@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<meta charset="utf-8">
+	<title>Mfs Files Management</title>
+	<link rel="stylesheet" href="style.css"> 
+	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
+	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+</head>
+
+<body>
+
+<div id=inputdivid>
+<h2>Inputs</h2>
+mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
+<button type=button onclick="display()">display</a>
+</div>
+<hr>
+<div id=outputdivid>
+<h2>Outputs</h2>
+<table id=directory_contentid border=1>
+    <thead>
+    <tr><th colspan=4><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
+    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th></tr>
+    </thead>
+    <tbody>
+    <tr id=dir_row0id class=ls_row">
+    <td class="pin_status">
+       <button class="pin_status_click QmHash" onclick="">pinStatus</button>
+       <span class="pin_status_span"> through <a href="#" class=pin_status_link>QmHash</a></span></td>
+    <td class=file_type>fileType</td>
+    <td class=file_name><a class=file_name_click href=#>fileName</a></td>
+    <td class=file_hash><a class=file_hash_link href=#>QmHash</a></td>
+    </tr>
+    </tbody>
+</table>
+<div>
+<hr>
+<table id=file_attributesid border=1>
+    <tr><th colspan=2><h4 id="file_pathid" class="whiteOnDarkBlue">filepath</h4></th>
+    <tr><th>pin</th><th>hash</th>
+    <tr id=file_row0id class=file_row_class>
+    <td class="pin_status_cell QmHash">unpinned</td>
+    <td class=file_hash_cell><a class=file_hash_link href=#>Qm12345</a></td>
+    </tr>
+</table>
+content:<br><textarea id=file_contentid>file's content</textarea>
+<div>
+
+</div>
+
+</body>
+
+<script src="mc_functionScript.js"></script>
+<script>
+// mapping ID -> function
+const outputs = {
+  'directory_contentid': display_directory_content
+}
+// type mapping
+const typenames = [ 'file','dir','link','others','...' ]
+
+var stored = {};
+
+
+// main build
+
+// all async function NEEDs to return the promise
+
+// IRP Rules :
+// -----------
+// no (variable) parameter in provide
+// only builds have arguments...
+// getdata can also have arguments (leaves)
+// display* function are outputs
+// build and display are NOT async function (not promises)
+//
+// (external) provide that requires a fetch can be done via an async
+// getdata* which do the fetch are promises
+
+// provide create deps tree
+// provide check stored[]
+// build store in stored[]
+// getdata do the clean 
+
+
+// NOTE FOR NEXT TIME (TBD) :
+// allow /ipfs/Qm1234 in mfs: input
+// add toggle to pin cell in file table 
+
+display();
+async function display() {
+// provide input :
+let mfs_path = getInputValue('mfs_pathinputid');
+var stat = await getStatofMfsPath(mfs_path);
+console.log('stat: ',stat);
+
+if (stat.Type == 'directory') {
+  display_directory_content();
+} else if (stat.Type == 'file') {
+  display_file_content();
+}
+
+}
+
+async function display_directory_content() {
+  console.log('entered display_directory_content!')
+  let table = await provide_directory_content();
+  let table_of_content = table.TOC
+  let te = document.getElementById('directory_contentid')
+  
+  let mfs_path = table.dirname
+  document.getElementById('directory_pathid').innerHTML = mfs_path
+
+  clear_display_directory_content();
+
+  for (item of table_of_content) {
+   console.log('display_directory_content.item:',item)
+
+   item.DirName = mfs_path; 
+   let filename = item.Name
+   stored['item'] = item;
+  
+   item.FullStatus = await providePinFullStatus('item')
+
+   let hash = item.Hash
+   let type = item.Type
+   let size = item.Size
+
+   if (type == 1) { filename += '/'; } // append a trailing / to directories
+   item.Path = mfs_path + filename;
+
+   console.log('row: ',item.FullStatus,filename,hash,type);
+   display_row(item); // /!\ problem w/ promise ???
+ }
+ console.log('table: '+ te.rows.length + ' rows')
+
+}
+
+function clear_display_directory_content() {
+   let e = document.getElementById('directory_contentid');
+   console.log('template row:',e.rows[2])
+   //e.rows[2].style.display='none'
+   
+   for (i = e.rows.length-1; i > 2; i--) {
+     e.deleteRow(i)
+   }
+   //console.log('nrow after delete:',e.rows.length)
+}
+
+
+function display_row(item) {
+ 
+   console.log('display_row:',item.Name)
+   let e = document.getElementById('directory_contentid');
+   let last = e.rows.length-1
+   let row = e.rows[last];
+   let newrow = e.insertRow(-1); // insert in last position
+   newrow.innerHTML = row.innerHTML; // copy previous row content
+   display_pin(item,newrow);
+   newrow.getElementsByClassName('file_type')[0].innerHTML = typenames[item.Type];
+   console.log('newrow: ',newrow);
+}
+
+function display_pin(item,row) {
+
+   let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
+
+   let btnlink = row.getElementsByClassName('pin_status_link')[0]
+   let status_span_el = row.getElementsByClassName('pin_status_span')[0]
+
+   if (pin_status == 'indirect') {
+       btnlink.innerHTML = pin_through.substr(0,9);
+       btnlink.href = 'http://localhost:8080/ipfs/'+pin_through
+
+       status_span_el.style.display = ''; // display it !
+   } else {
+       status_span_el.style.display = 'none'
+   }
+
+   let button = row.getElementsByClassName('pin_status_click')[0]
+       button.innerHTML = pin_status
+       button.className = 'pin_status_click '+item.Hash
+
+     button.onclick = function() {
+       let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
+       console.log('onclick.iten.FullStatus:',item.FullStatus);
+       console.log('onclick.cur_pin_status:',cur_pin_status);
+
+       return togglePinStatus(cur_pin_status,item.Hash)
+       .then( full_status => {  
+         item.FullStatus = full_status
+         let [new_pin_status,qm_through] = splitPinFullStatus(full_status)
+
+         let elems = document.getElementsByClassName(item.Hash)
+         for (let e of elems) {
+            e.innerHTML = new_pin_status
+         }
+         if (new_pin_status == 'indirect') {
+            btnlink.innerHTML = qm_through.substr(0,9);
+            btnlink.href = 'http://localhost:8080/ipfs/'+qm_through
+            status_span_el.style.display = ''; // display it !
+         }
+
+       })
+
+     }
+
+   let file_name_click=row.getElementsByClassName('file_name_click')[0]
+   file_name_click.onclick = function() {
+     stored['curFile'] = item
+     // invalidate irp_path (TBD)
+     document.getElementById('mfs_pathinputid').value = item.Path
+     display()
+   }
+   file_name_click.innerHTML = item.Name;
+
+   let fhlink=row.getElementsByClassName('file_hash_link')[0]
+     fhlink.href = 'http://localhost:8080/ipfs/'+item.Hash
+     fhlink.innerHTML = item.Hash;
+
+}
+
+async function display_file_content() {
+ 
+ console.log('entered display_file_content!')
+ let content = await provide_file_content();
+ console.log('display_file_content.stored[curFile]: ',stored['curFile'])
+ let item = provideItem('curFile')
+ console.log('item: ',item)
+ console.log('item.Name: ',item.Name)
+
+ let pin_status = item.Status
+ console.log('item.Status: ',item.Status)
+ 
+ let hash = item.Hash
+
+ document.getElementById('file_pathid').innerHTML = item.Path
+
+ let row = document.getElementById('file_attributesid').rows[2];
+ console.log('display_file_content.row: ',row);
+ let cell = row.getElementsByClassName('pin_status_cell')[0]
+ cell.innerHTML = pin_status;
+ cell.className = 'pin_status '+item.Hash
+
+ let link = row.getElementsByClassName('file_hash_link')[0]
+   link.innerHTML = hash
+   link.href = 'http://127.0.0.1:8080/ipfs/'+hash
+ console.log('display_file_content.link: ',link);
+
+ document.getElementById('file_contentid').value = content;
+}
+
+
+</script>
+
+</html>
