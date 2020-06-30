@@ -27,6 +27,7 @@ async function getStatofMfsPath(mfs_path) {
    let url = api_url + 'files/stat?arg='+mfs_path+'&hash=true&type=true'
    return fetchGetPostJson(url)
    .then(obj => {
+    obj.Type = obj.Type.charAt(0).toUpperCase() + obj.Type.slice(1);
     console.log('getStatofMfsPath.obj: ',obj);
     return obj;
     })
@@ -34,12 +35,13 @@ async function getStatofMfsPath(mfs_path) {
 }  
 
 async function provide_directory_content() {
-  let mfs_path = getInputValue('mfs_pathinputid');
+  let item = await provideItem('curItem')
+  let mfs_path = item.Path
   let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
   if (immutable) {
-  mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TDB
+     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TBD
   } else {
-  mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
+     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
   }
   
   // build directory content ...
@@ -48,13 +50,13 @@ async function provide_directory_content() {
 }
 
 function build_directory_content(mfs_path) {
-  let [callee, caller] = functionNameJS();
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
   let parent_path = mfs_path + '../';
   let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
       console.log(callee+'.immutable: ',immutable)
 
   if (mfs_path == '/' || immutable) {
-  parent_path = '/';
+    parent_path = '/';
   }
   console.log(callee+'.parent_path: '+parent_path)
   let promise_parent_hash = getHashofMfsPath(parent_path)
@@ -71,35 +73,38 @@ function build_directory_content(mfs_path) {
       console.log(callee+'.file.ls: ',content)
       json.Entries = content; // map as if it was a "files/ls" API call
       const typetonum = { 'Directory': 1,'File': 0 }
-      json.Entries.forEach( e => { e.Type = typetonum[e.Type]} )
+      json.Entries.forEach( e => { e.Type = typetonum[e.Type] } )
       return json;
     })
    
   } else if ( ipfsversion == '0.4.22') {
     url = api_url + 'files/ls?arg='+mfs_path+'&l=true&U=true'
     promise_dir_content = fetchRespCatch(url)
+    .then ()
   } else {
     url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
     promise_dir_content = fetchRespCatch(url)
+    .then ()
   }
 
   return Promise.all([promise_parent_hash,promise_dir_content]) 
   .then(_ => {
      [parent_hash, obj] = _
-     console.log('build_directory_content.promise.results: ',_);
+     console.log(callee+'.promise.results: ',_);
      let table_of_content = obj.Entries;
+     table_of_content.forEach( e => { e.Type = ['File','Directory'][e.Type] } )
      if (table_of_content == null) {
        table_of_content = [];
      }
-     let parent_item = { Name:'..', Type:1, Size:0, Hash:parent_hash, Path:mfs_path }
-     console.log('build_directory_content.parent_item: ',parent_item);
+     let parent_item = { Name:'..', Type:'Directory', Size:0, Hash:parent_hash, Path:mfs_path }
+     console.log(callee+'.parent_item: ',parent_item);
      table_of_content.unshift(parent_item)
-     console.log('build_directory_content: ',table_of_content);
+     console.log(callee+'.TOC:',table_of_content);
      return { "dirname":mfs_path, "parent":parent_hash, "TOC":table_of_content };
 
 
    })
-   .catch( obj => { logError('build_directory_content.catch',obj) })
+   .catch( obj => { logError(callee+'.catch',obj) })
 }
 function getHashofMfsPath(mfs_path) {
   let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
@@ -115,9 +120,23 @@ function provide_file_content() {
 }
 
 
-function provideItem(ofwhat) {
+async function provideItem(ofwhat) {
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
   if (typeof(stored[ofwhat]) != 'undefined') {  
     return stored[ofwhat]
+  } else if (ofwhat == 'curItem') {
+    // created (build)
+    let mfs_path = getInputValue('mfs_pathinputid'); // provide Input !
+    var stat = await getStatofMfsPath(mfs_path);
+
+    let item = stat;
+    item.Path = mfs_path
+    let slash = mfs_path.lastIndexOf('/')
+    item.DirName = mfs_path.substring(0,slash+1);
+    item.Name = mfs_path.substr(slash+1);
+    console.log(callee+'.item:',item);
+    stored[ofwhat] = item;
+    return item;
   } else {
     throw "Error: "+ofwhat+" not previously stored !";
   }

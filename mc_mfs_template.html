@@ -4,7 +4,11 @@
 	<meta charset="utf-8">
 	<title>Mfs Files Management</title>
 	<link rel="stylesheet" href="style.css"> 
+
+<!--
 	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
+-->
+	<script src="../snippets/js/essential.js"></script>
 	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
 </head>
 
@@ -26,7 +30,7 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
     <tbody>
     <tr id=dir_row0id class=ls_row">
     <td class="pin_status">
-       <button class="pin_status_click QmHash" onclick="">pinStatus</button>
+       <button class="pin_status_click" name="QmHash" onclick="">pinStatus</button>
        <span class="pin_status_span"> through <a href="#" class=pin_status_link>QmHash</a></span></td>
     <td class=file_type>fileType</td>
     <td class=file_name><a class=file_name_click href=#>fileName</a></td>
@@ -40,7 +44,7 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
     <tr><th colspan=2><h4 id="file_pathid" class="whiteOnDarkBlue">filepath</h4></th>
     <tr><th>pin</th><th>hash</th>
     <tr id=file_row0id class=file_row_class>
-    <td class="pin_status_cell QmHash">unpinned</td>
+    <td class="pin_status_cell" name="mHash">unpinned</td>
     <td class=file_hash_cell><a class=file_hash_link href=#>Qm12345</a></td>
     </tr>
 </table>
@@ -87,21 +91,22 @@ var stored = {};
 // NOTE FOR NEXT TIME (TBD) :
 
 // build dependency tree...
+// broke .. w/ stored['curItem']
+
 // split root=/ipfs/Qm and mutable_path
 // allow /ipfs/Qm1234 in mfs: input
-// add toggle to pin cell in file table 
 
 display();
 async function display() {
-// provide input :
-let mfs_path = getInputValue('mfs_pathinputid');
-var stat = await getStatofMfsPath(mfs_path);
-console.log('stat: ',stat);
+let [callee, caller] = functionNameJS(); // logInfo("message !")
+let item = await provideItem('curItem');
 
-if (stat.Type == 'directory') {
+if (item.Type == 'Directory') {
   display_directory_content();
-} else if (stat.Type == 'file') {
+} else if (item.Type == 'File') {
   display_file_content();
+} else {
+  console.error(callee+'.item.Type:',item.Type);
 }
 
 }
@@ -109,6 +114,7 @@ if (stat.Type == 'directory') {
 async function display_directory_content() {
   console.log('entered display_directory_content!')
   let table = await provide_directory_content();
+
   let table_of_content = table.TOC
   let te = document.getElementById('directory_contentid')
   
@@ -130,7 +136,7 @@ async function display_directory_content() {
    let type = item.Type
    let size = item.Size
 
-   if (type == 1) { filename += '/'; } // append a trailing / to directories
+   if (type == 'Directory') { filename += '/'; } // append a trailing / to directories
    item.Path = mfs_path + filename;
 
    console.log('row: ',item.FullStatus,filename,hash,type);
@@ -160,13 +166,14 @@ function display_row(item) {
    let row = e.rows[last];
    let newrow = e.insertRow(-1); // insert in last position
    newrow.innerHTML = row.innerHTML; // copy previous row content
+
    display_pin(item,newrow);
 
    let file_name_click=newrow.getElementsByClassName('file_name_click')[0]
    file_name_click.onclick = function() {
-     stored['curFile'] = item
-     // invalidate irp_path (TBD)
      document.getElementById('mfs_pathinputid').value = item.Path
+     //stored['QmHash'] = item.Hash
+     stored['curItem'] = item
      display()
    }
    file_name_click.innerHTML = item.Name;
@@ -175,7 +182,7 @@ function display_row(item) {
      fhlink.href = 'http://localhost:8080/ipfs/'+item.Hash
      fhlink.innerHTML = item.Hash;
 
-   newrow.getElementsByClassName('file_type')[0].innerHTML = typenames[item.Type];
+   newrow.getElementsByClassName('file_type')[0].innerHTML = item.Type; // typenames[item.Type];
    console.log('newrow: ',newrow);
 }
 
@@ -197,19 +204,22 @@ function display_pin(item,row) {
 
    let button = row.getElementsByClassName('pin_status_click')[0]
        button.innerHTML = pin_status
-       button.className = 'pin_status_click '+item.Hash
+       //button.className = 'pin_status_click '+item.Hash // update class QmHash
+       button.setAttribute('name', item.Hash) // update QmHash's name
 
      button.onclick = function() {
+       let [callee, caller] = functionNameJS();
        let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
-       console.log('onclick.iten.FullStatus:',item.FullStatus);
-       console.log('onclick.cur_pin_status:',cur_pin_status);
+       console.log(callee+'.item.FullStatus:',item.FullStatus);
+       console.log(callee+'.cur_pin_status:',cur_pin_status);
 
        return togglePinStatus(cur_pin_status,item.Hash)
        .then( full_status => {  
          item.FullStatus = full_status
          let [new_pin_status,qm_through] = splitPinFullStatus(full_status)
 
-         let elems = document.getElementsByClassName(item.Hash)
+         let elems = document.getElementsByName(item.Hash)
+         console.log(callee+'.elems: ',elems)
          for (let e of elems) {
             e.innerHTML = new_pin_status
          }
@@ -226,31 +236,36 @@ function display_pin(item,row) {
 }
 
 async function display_file_content() {
- 
- console.log('entered display_file_content!')
- let content = await provide_file_content();
- console.log('display_file_content.stored[curFile]: ',stored['curFile'])
- let item = provideItem('curFile')
- console.log('item: ',item)
- console.log('item.Name: ',item.Name)
+ let [callee, caller] = functionNameJS();
 
- let pin_status = item.Status
- console.log('item.Status: ',item.Status)
- 
+ console.log(callee+'.stored[curItem]: ',stored['curItem'])
+
+ let item = await provideItem('curItem')
+
+ console.log(callee+'.item: ',item)
+ let mfs_path = item.Path
+ let content = await provide_file_content();
+
+
+ let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
  let hash = item.Hash
+
+ console.log(callee+'.item.Name: ',item.Name)
+ console.log(callee+'.item.FullStatus: ',item.FullStatus)
 
  document.getElementById('file_pathid').innerHTML = item.Path
 
  let row = document.getElementById('file_attributesid').rows[2];
- console.log('display_file_content.row: ',row);
+ console.log(callee+'.row: ',row);
+
  let cell = row.getElementsByClassName('pin_status_cell')[0]
+ cell.setAttribute('name', hash); // update attribute name w/ QmHash's value
  cell.innerHTML = pin_status;
- cell.className = 'pin_status '+item.Hash
 
  let link = row.getElementsByClassName('file_hash_link')[0]
-   link.innerHTML = hash
-   link.href = 'http://127.0.0.1:8080/ipfs/'+hash
- console.log('display_file_content.link: ',link);
+ link.innerHTML = hash
+ link.href = 'http://127.0.0.1:8080/ipfs/'+hash
+ console.log(callee+'.link: ',link);
 
  document.getElementById('file_contentid').value = content;
 }

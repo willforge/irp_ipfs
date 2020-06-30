@@ -27,7 +27,7 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" value="/">
     <tbody>
     <tr id=dir_row0id class=ls_row">
     <td class="pin_status">
-       <button class="pin_status_click QmHash" onclick="">pinStatus</button>
+       <button class="pin_status_click" name="QmHash" onclick="">pinStatus</button>
        <span class="pin_status_span"> through <a href="#" class=pin_status_link>QmHash</a></span></td>
     <td class=file_type>fileType</td>
     <td class=file_name><a class=file_name_click href=#>fileName</a></td>
@@ -130,10 +130,6 @@ content:<br><textarea id=file_contentid>file's content</textarea>
 	 stored['item'] = item;
 	 
 	 item.FullStatus = await providePinFullStatus('item')
-	 /* 
-	    item.Status = await providePinStatus('item')
-	    item.Through = await provideThrough('item')
-	  */
 
 	 let hash = item.Hash
 	 let type = item.Type
@@ -145,32 +141,12 @@ content:<br><textarea id=file_contentid>file's content</textarea>
 	 console.log(callee+'.item',item);
 	 console.log(callee+'.type',type);
 	 console.log(callee+'.row: ',item.FullStatus,filename,hash,type);
-	 display_row(item); // /!\ problem w/ promise ???
+	 display_row(item);
      }
      console.log(callee+'.table: '+ te.rows.length + ' rows')
 
  }
 
-
- async function providePinStatus(ofwhat) {
-     let [callee, caller] = functionNameJS();
-     console.log('Entering in',callee,'called by',caller);
-     console.log(callee+'.input.ofwhat: ',ofwhat);
-
-     let pin_status;
-     [pin_status, _] = await providePinStatusThrough(ofwhat) // provide
-     return pin_status;
-     
- }
- async function provideThrough(ofwhat) {
-     let [callee, caller] = functionNameJS();
-     console.log('Entering in',callee,'called by',caller);
-     console.log(callee+'.input.ofwhat:',ofwhat);
-
-     let pin_through;
-     [_,pin_through] = await providePinStatusThrough(ofwhat) // provide
-     return pin_through;
- }
 
  function splitPinFullStatus(fullstatus) {
      let [callee, caller] = functionNameJS();
@@ -181,18 +157,18 @@ content:<br><textarea id=file_contentid>file's content</textarea>
      console.log(callee+'.matches:',matches)
      let pin_status
      let qm_through
-     if (matches) {
-	 pin_status = matches[1]
-	 qm_through = matches[2]
-	 console.log(callee+'.pin_status: '+pin_status)
-	 console.log(callee+'.qm_through: '+qm_through)
+     if (matches) { // it is a through pin !
+        pin_status = matches[1]
+        qm_through = matches[2]
+        console.log(callee+'.pin_status: '+pin_status)
+        console.log(callee+'.qm_through: '+qm_through)
      } else {
-	 pin_status = fullstatus
-	 if (pin_status == 'unpinned') {
-	     qm_through = 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'
-	 } else {
-	     qm_through = null
-	 }
+        pin_status = fullstatus
+        if (pin_status == 'unpinned') {
+          qm_through = 'QmbFMke1KXqnYyBBWxB74N4c5SBnJMVAiMNRcGu6x1AwQH'
+        } else {
+          qm_through = null
+        }
      }
 
      console.log(callee+'.pin_status: '+pin_status)
@@ -246,51 +222,52 @@ content:<br><textarea id=file_contentid>file's content</textarea>
      let status_span_el = row.getElementsByClassName('pin_status_span')[0]
 
      if (pin_status == 'indirect') {
-	 btnlink.innerHTML = pin_through.substr(0,9);
-	 btnlink.href = 'http://localhost:8080/ipfs/'+pin_through
+        btnlink.innerHTML = pin_through.substr(0,9);
+        btnlink.href = 'http://localhost:8080/ipfs/'+pin_through
 
-	 status_span_el.style.display = ''; // display it !
+        status_span_el.style.display = ''; // display it !
      } else {
-	 status_span_el.style.display = 'none'
+        status_span_el.style.display = 'none'
      }
 
      let button = row.getElementsByClassName('pin_status_click')[0]
      button.innerHTML = pin_status
-     button.className = 'pin_status_click '+item.Hash
+     // button.className = 'pin_status_click '+item.Hash // update class QmHash
+     button.setAttribute('name',item.Hash) // update QmHash Name
 
      button.onclick = function() {
-	 let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
-	 console.log(callee+'.button.onclick.item.FullStatus:',item.FullStatus);
-	 console.log(callee+'.button.onclick.cur_pin_status:',cur_pin_status);
-	 console.log(callee+'.button.onclick.pin_through:',pin_through);
+        let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
+        console.log(callee+'.button.onclick.item.FullStatus:',item.FullStatus);
+        console.log(callee+'.button.onclick.cur_pin_status:',cur_pin_status);
+        console.log(callee+'.button.onclick.pin_through:',pin_through);
 
-	 return togglePinStatus(cur_pin_status,item.Hash)
-	     .then( full_status => {  
-		 item.FullStatus = full_status
-		 let [new_pin_status,qm_through] = splitPinFullStatus(full_status)
+        return togglePinStatus(cur_pin_status,item.Hash)
+           .then( full_status => {  
+                 item.FullStatus = full_status
+                 let [new_pin_status,qm_through] = splitPinFullStatus(full_status)
 
-		 let elems = document.getElementsByClassName(item.Hash)
-		 for (let e of elems) {
-		     e.innerHTML = new_pin_status
-		 }
-		 if (new_pin_status == 'indirect') {
-		     btnlink.innerHTML = qm_through.substr(0,9);
-		     btnlink.href = 'http://localhost:8080/ipfs/'+qm_through
-		     status_span_el.style.display = ''; // display it !
-		 }
+                 let elems = document.getElementsByName(item.Hash)
+                 for (let e of elems) {
+                 e.innerHTML = new_pin_status
+                 }
+                 if (new_pin_status == 'indirect') {
+                 btnlink.innerHTML = qm_through.substr(0,9);
+                 btnlink.href = 'http://localhost:8080/ipfs/'+qm_through
+                 status_span_el.style.display = ''; // display it !
+                 }
 
-	     })
+                 })
 
      }
 
      let file_name_click=row.getElementsByClassName('file_name_click')[0]
      file_name_click.onclick = function() {
-	 stored['curFile'] = item
-	 console.log(callee+'.stored[curFile] item',item);
-	 // invalidate irp_path (TBD)
-	 document.getElementById('mfs_pathinputid').value = item.Path
-	 display()
-     }
+           stored['curFile'] = item
+              console.log(callee+'.stored[curFile] item',item);
+           // invalidate irp_path (TBD)
+           document.getElementById('mfs_pathinputid').value = item.Path
+              display()
+        }
      file_name_click.innerHTML = item.Name;
 
      let fhlink=row.getElementsByClassName('file_hash_link')[0]
