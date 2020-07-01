@@ -6,9 +6,9 @@
 	<link rel="stylesheet" href="style.css"> 
 
 <!--
-	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
--->
 	<script src="../snippets/js/essential.js"></script>
+-->
+	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
 	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
 </head>
 
@@ -112,7 +112,7 @@ if (item.Type == 'Directory') {
 }
 
 async function display_directory_content() {
-  console.log('entered display_directory_content!')
+let [callee, caller] = functionNameJS(); // logInfo("message !")
   let table = await provide_directory_content();
 
   let table_of_content = table.TOC
@@ -147,9 +147,10 @@ async function display_directory_content() {
 }
 
 function clear_display_directory_content() {
+let [callee, caller] = functionNameJS(); // logInfo("message !")
    let e = document.getElementById('directory_contentid');
-   console.log('template row:',e.rows[2])
-   //e.rows[2].style.display='none'
+   console.log(callee+'.template_row:',e.rows[2])
+   e.rows[2].style.display='none'
    
    for (i = e.rows.length-1; i > 2; i--) {
      e.deleteRow(i)
@@ -159,7 +160,7 @@ function clear_display_directory_content() {
 
 
 function display_row(item) {
- 
+let [callee, caller] = functionNameJS(); // logInfo("message !")
    console.log('display_row:',item.Name)
    let e = document.getElementById('directory_contentid');
    let last = e.rows.length-1
@@ -187,6 +188,7 @@ function display_row(item) {
 }
 
 function display_pin(item,row) {
+let [callee, caller] = functionNameJS(); // logInfo("message !")
 
    let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
 

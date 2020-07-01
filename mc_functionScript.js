@@ -19,16 +19,18 @@ function getInputValue(id) {
   if (typeof(e) !=  'undefined') {
     return e.value
   } else {
-    console.error('id: '+id+ 'not defined');
+    let [callee, caller] = functionNameJS();
+    console.error(callee+'.id: '+id+ 'not found');
   }
 }
 
 async function getStatofMfsPath(mfs_path) {
+  let [callee, caller] = functionNameJS();
    let url = api_url + 'files/stat?arg='+mfs_path+'&hash=true&type=true'
    return fetchGetPostJson(url)
    .then(obj => {
     obj.Type = obj.Type.charAt(0).toUpperCase() + obj.Type.slice(1);
-    console.log('getStatofMfsPath.obj: ',obj);
+    console.log(callee+'.obj: ',obj);
     return obj;
     })
    .catch(console.error)
@@ -142,6 +144,7 @@ async function provideItem(ofwhat) {
   }
 }
 function providePinFullStatus(ofwhat) {
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
   let hash = stored[ofwhat].Hash;
   return getPinStatus(hash);
 }
@@ -189,6 +192,7 @@ function splitPinFullStatus(fullstatus) {
 
 
 async function provideHashofMfsPath(ofwhat) {
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
   if (typeof(stored[ofwhat].Hash) != 'undefined') {  
     return stored[ofwhat].Hash
   } else {
@@ -208,6 +212,7 @@ async function provideHashofMfsPath(ofwhat) {
 }
 
 function getPinStatus(hash) { // getdata
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
    let  url = api_url + 'pin/ls?arg=/ipfs/'+hash+'&type=all'
    return fetchRespNoCatch(url)
    .then( obj => {
@@ -224,7 +229,8 @@ function getPinStatus(hash) { // getdata
 }
 
 function togglePinStatus(status, hash) {
-   console.log('togglePinStatus.status.before:',status);
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
+   console.log(callee+'.status.before:',status);
    if (status == 'unpinned' || status == 'indirect') {
       return ipfsPinAdd(hash)
       .then( _ => { return getPinStatus(hash)})
@@ -233,7 +239,7 @@ function togglePinStatus(status, hash) {
       return ipfsPinRm(hash)
       .then( _ => { return getPinStatus(hash)})
    } else {
-      console.log('togglePinStatus.status:',status);
+      console.log(callee+'.status:',status);
       return Promise.resolve('???');
    }
 }
