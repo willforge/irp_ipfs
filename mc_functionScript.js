@@ -100,7 +100,7 @@ function getHashofMfsPath(mfs_path) {
 
 async function provideItem(ofwhat) {
   let [callee, caller] = functionNameJS(); // logInfo("message !")
-  if (typeof(stored[ofwhat]) != 'undefined') {  
+  if (typeof(stored[ofwhat]) != 'undefined' && stored[ofwhat] != null) {  
     console.log(callee+'.retrieve('+ofwhat+'):',stored[ofwhat]);
     return stored[ofwhat]
   } else if (ofwhat == 'curItem') {
