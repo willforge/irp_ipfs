@@ -7,9 +7,15 @@
 
 <!--
 	<script src="../snippets/js/essential.js"></script>
+
+  /!\ doesn't work due to "text/plain" i.e. a proxy
+	<script src="https://raw.githubusercontent.com/michel47/snippets/master/js/essential.js"></script>
+	<script src="https://github.com/michel47/snippets/raw/7ea10/js/essential.js"></script>
+
+	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
 -->
 	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
-	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+	<script src="../jsring/js/ipfs.js"></script>
 </head>
 
 <body>
@@ -91,7 +97,7 @@ var stored = {};
 // NOTE FOR NEXT TIME (TBD) :
 
 // build dependency tree...
-// broke .. w/ stored['curItem']
+// broke '..' w/ stored['curItem']
 
 // split root=/ipfs/Qm and mutable_path
 // allow /ipfs/Qm1234 in mfs: input
@@ -246,7 +252,7 @@ async function display_file_content() {
 
  console.log(callee+'.item: ',item)
  let mfs_path = item.Path
- let content = await provide_file_content();
+ let content = await getContentofMfsPath(mfs_path);
 
 
  let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)

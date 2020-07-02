@@ -2,17 +2,12 @@
 // assumed api_url is already defined ...
 
 if (typeof(ipfsversion) == 'undefined') {
-  var ipfsversion;
-  let url = api_url + 'version'
-  console.log('main.url: ',url);
-  ipfsversion = fetchGetPostJson(url).then(
-   obj => { console.log('main.version.obj: ',obj); return obj.Version; })
-  .catch(console.error)
-
+//  ipfsVersion().then( v => { ipfsversion = v })
 } else {
   let [callee, caller] = functionNameJS();
   console.log("TEST."+callee+'.ipfsversion: ',ipfsversion);
 }
+
 
 function getInputValue(id) {
   let e = document.getElementById(id);
@@ -84,6 +79,7 @@ function build_directory_content(mfs_path) {
     promise_dir_content = fetchRespCatch(url)
     .then ()
   } else {
+    console.log(callee+'.ipfsversion: ',ipfsversion)
     url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
     promise_dir_content = fetchRespCatch(url)
     .then ()
@@ -115,12 +111,6 @@ function getHashofMfsPath(mfs_path) {
          return json.Hash
      })
 }
-
-function provide_file_content() {
-  let mfs_path = getInputValue('mfs_pathinputid');
-  return getContentofMfsPath(mfs_path);
-}
-
 
 async function provideItem(ofwhat) {
   let [callee, caller] = functionNameJS(); // logInfo("message !")
