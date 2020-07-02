@@ -105,26 +105,34 @@ var stored = {};
 display();
 async function display() {
 let [callee, caller] = functionNameJS(); // logInfo("message !")
-let item = await provideItem('curItem');
+let cur_item = await provideItem('curItem');
 
-if (item.Type == 'Directory') {
-  display_directory_content();
-} else if (item.Type == 'File') {
-  display_file_content();
+if (cur_item.Type == 'Directory') {
+  display_directory_content(cur_item);
+} else if (cur_item.Type == 'File') {
+  display_file_content(cur_item);
 } else {
-  console.error(callee+'.item.Type:',item.Type);
+  console.error(callee+'.cur_item.Type:',cur_item.Type);
 }
 
 }
 
-async function display_directory_content() {
+async function display_directory_content(cur_item) {
 let [callee, caller] = functionNameJS(); // logInfo("message !")
-  let table = await provide_directory_content();
+  let mfs_path = cur_item.Path
+
+  
+  let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
+  if (immutable) { // special reduction for /ipfs/Qm1234/..
+     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TBD
+  } else {
+     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
+  }
+  let table = await fetch_directory_content(mfs_path);
 
   let table_of_content = table.TOC
   let te = document.getElementById('directory_contentid')
   
-  let mfs_path = table.dirname
   document.getElementById('directory_pathid').innerHTML = mfs_path
 
   clear_display_directory_content();
@@ -134,13 +142,14 @@ let [callee, caller] = functionNameJS(); // logInfo("message !")
 
    item.DirName = mfs_path; 
    let filename = item.Name
-   stored['item'] = item;
+   //stored['item'] = item;
   
-   item.FullStatus = await providePinFullStatus('item')
 
    let hash = item.Hash
    let type = item.Type
    let size = item.Size
+
+   item.FullStatus = await getPinStatus(hash)
 
    if (type == 'Directory') { filename += '/'; } // append a trailing / to directories
    item.Path = mfs_path + filename;
@@ -248,20 +257,20 @@ async function display_file_content() {
 
  console.log(callee+'.stored[curItem]: ',stored['curItem'])
 
- let item = await provideItem('curItem')
+ let cur_item = await provideItem('curItem')
 
- console.log(callee+'.item: ',item)
+ console.log(callee+'.cur_item: ',cur_item)
  let mfs_path = item.Path
  let content = await getContentofMfsPath(mfs_path);
 
 
- let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
- let hash = item.Hash
+ let [pin_status,pin_through] = splitPinFullStatus(cur_item.FullStatus)
+ let hash = cur_item.Hash
 
- console.log(callee+'.item.Name: ',item.Name)
- console.log(callee+'.item.FullStatus: ',item.FullStatus)
+ console.log(callee+'.cur_item.Name: ',cur_item.Name)
+ console.log(callee+'.cur_item.FullStatus: ',cur_item.FullStatus)
 
- document.getElementById('file_pathid').innerHTML = item.Path
+ document.getElementById('file_pathid').innerHTML = cur_item.Path
 
  let row = document.getElementById('file_attributesid').rows[2];
  console.log(callee+'.row: ',row);

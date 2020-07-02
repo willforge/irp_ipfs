@@ -31,22 +31,7 @@ async function getStatofMfsPath(mfs_path) {
    .catch(console.error)
 }  
 
-async function provide_directory_content() {
-  let item = await provideItem('curItem')
-  let mfs_path = item.Path
-  let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
-  if (immutable) {
-     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TBD
-  } else {
-     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
-  }
-  
-  // build directory content ...
-  return build_directory_content(mfs_path);
-
-}
-
-function build_directory_content(mfs_path) {
+function fetch_directory_content(mfs_path) {
   let [callee, caller] = functionNameJS(); // logInfo("message !")
   let parent_path = mfs_path + '../';
   let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
@@ -104,6 +89,7 @@ function build_directory_content(mfs_path) {
    })
    .catch( obj => { logError(callee+'.catch',obj) })
 }
+
 function getHashofMfsPath(mfs_path) {
   let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
   return fetchGetPostJson(url) // get
@@ -115,6 +101,7 @@ function getHashofMfsPath(mfs_path) {
 async function provideItem(ofwhat) {
   let [callee, caller] = functionNameJS(); // logInfo("message !")
   if (typeof(stored[ofwhat]) != 'undefined') {  
+    console.log(callee+'.retrieve('+ofwhat+'):',stored[ofwhat]);
     return stored[ofwhat]
   } else if (ofwhat == 'curItem') {
     // created (build)
@@ -132,31 +119,6 @@ async function provideItem(ofwhat) {
   } else {
     throw "Error: "+ofwhat+" not previously stored !";
   }
-}
-function providePinFullStatus(ofwhat) {
-  let [callee, caller] = functionNameJS(); // logInfo("message !")
-  let hash = stored[ofwhat].Hash;
-  return getPinStatus(hash);
-}
-async function providePinStatusThrough(ofwhat) {
-  let hash;
-  if (ofwhat == 'item') {
-     hash = stored[ofwhat].Hash;
-     let pin_full_status = await getPinStatus(hash);
-     let pin_split_status = splitPinFullStatus(pin_full_status)
-     return pin_split_status;
-  }
-}
-async function providePinStatus(ofwhat) {
-   let pin_status;
-   [pin_status, _] = await providePinStatusThrough(ofwhat) // provide
-   return pin_status;
-
-}
-async function provideThrough(ofwhat) {
-   let pin_through;
-   [_,pin_through] = await providePinStatusThrough(ofwhat) // provide
-   return pin_through;
 }
 
 function splitPinFullStatus(fullstatus) {
@@ -178,27 +140,6 @@ function splitPinFullStatus(fullstatus) {
   }
   console.log('splitPFS: ',[pin_status,qm_through])
   return [pin_status,qm_through]
-}
-
-
-async function provideHashofMfsPath(ofwhat) {
-  let [callee, caller] = functionNameJS(); // logInfo("message !")
-  if (typeof(stored[ofwhat].Hash) != 'undefined') {  
-    return stored[ofwhat].Hash
-  } else {
-     let mfs_path = stored[ofwhat].mfs_path
-     console.log(callee+'.stored['+ofwhat+']: ',stored[ofwhat]);
-     console.log(callee+'.mfs_path: ',mfs_path);
-     let  url = api_url + 'files/stat?arg='+mfs_path+'&hash=true'
-     let hash = await fetchGetPostJson(url) // buid/get
-     .then( json => {
-         stored[ofwhat].Hash = json.Hash
-         return json.Hash
-     })
-     .catch( console.error )
-
-     return hash;
-  }
 }
 
 function getPinStatus(hash) { // getdata
