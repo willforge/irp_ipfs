@@ -11,19 +11,18 @@
   /!\ doesn't work due to "text/plain" i.e. a proxy
 	<script src="https://raw.githubusercontent.com/michel47/snippets/master/js/essential.js"></script>
 	<script src="https://github.com/michel47/snippets/raw/7ea10/js/essential.js"></script>
-	<script id=js src="../jsring/js/ipfs.js"></script>
 
+	<script id=js src="https://willforge.github.io/jsring/js/ipfs.js"></script>
 -->
 	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
-	<script id=js src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+	<script id=js src="../jsring/js/ipfs.js"></script>
   <script><!-- use local js file -->
   (async _ => {  if (document.location.href.match('michel')) {
       console.log(document.location);
+      console.log('js: ',document.getElementById('js').src)
       let js = document.getElementById('js')
       console.log('js: ',js)
       js.src='../jsring/js/ipfs.js';
-      await js.onload(_ => { console.log('js loaded')})
-      console.log(document.getElementById('js').src)
     }
   })()
   </script>
@@ -216,9 +215,9 @@ let [callee, caller] = functionNameJS(); // logInfo("message !")
    }
    file_name_click.innerHTML = item.Name;
 
-   let fhlink=newrow.getElementsByClassName('file_hash_link')[0]
-     fhlink.href = 'http://localhost:8080/ipfs/'+item.Hash
-     fhlink.innerHTML = item.Hash;
+   let file_hash_link=newrow.getElementsByClassName('file_hash_link')[0]
+     file_hash_link.href = 'http://localhost:8080/ipfs/'+item.Hash
+     file_hash_link.innerHTML = item.Hash;
 
    newrow.getElementsByClassName('file_type')[0].innerHTML = item.Type; // typenames[item.Type];
    console.log('newrow: ',newrow);
@@ -229,21 +228,21 @@ let [callee, caller] = functionNameJS(); // logInfo("message !")
 
    let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
 
-   let btnlink = row.getElementsByClassName('pin_status_link')[0]
+   let btn_pin_status_link = row.getElementsByClassName('pin_status_link')[0]
    let status_span_el = row.getElementsByClassName('pin_status_span')[0]
 
    if (pin_status == 'indirect') {
-      btnlink.onclick = function () {
+      btn_pin_status_link.onclick = function () {
          let new_path = '/ipfs/'+pin_through+'/';
          document.getElementById('mfs_pathinputid').value = new_path
          stored['curItem'] = { Path:new_path, Hash:pin_through, Type:'Directory', Size:0, DirName:'/',Name:new_path }
          display()
       }
-      btnlink.innerHTML = pin_through.substr(0,9);
-      //btnlink.href = 'http://localhost:8080/ipfs/'+pin_through
-      //btnlink.deleteAttribute('href')
+      btn_pin_status_link.innerHTML = pin_through.substr(0,9);
+      //btn_pin_status_link.href = 'http://localhost:8080/ipfs/'+pin_through
+      //btn_pin_status_link.deleteAttribute('href')
 
-      console.log(callee+'.btnlink:',btnlink);
+      console.log(callee+'.btn_pin_status_link:',btn_pin_status_link);
 
       status_span_el.style.display = ''; // display it !
    } else {
@@ -272,16 +271,16 @@ let [callee, caller] = functionNameJS(); // logInfo("message !")
             e.innerHTML = new_pin_status
          }
          if (new_pin_status == 'indirect') {
-            btnlink.onclick = function () {
+            btn_pin_status_link.onclick = function () {
                 let new_path = '/ipfs/'+qm_through+'/';
                 document.getElementById('mfs_pathinputid').value = new_path
                 stored['curItem'] = { Path:new_path, Hash:qm_through, Type:'Directory', Size:0, DirName:'/',Name:new_path }
                 display()
     
             }
-            console.log(callee+'.btnlink: ',btnlink);
-            btnlink.innerHTML = qm_through.substr(0,9);
-            //btnlink.href = 'http://localhost:8080/ipfs/'+qm_through
+            console.log(callee+'.btn_pin_status_link: ',btn_pin_status_link);
+            btn_pin_status_link.innerHTML = qm_through.substr(0,9);
+            //btn_pin_status_link.href = 'http://localhost:8080/ipfs/'+qm_through
             status_span_el.style.display = ''; // display it !
          }
 
@@ -299,8 +298,13 @@ async function display_file_content() {
  let cur_item = await provideItem('curItem')
 
  console.log(callee+'.cur_item: ',cur_item)
- let mfs_path = cur_item.Path
- let content = await getContentofMfsPath(mfs_path);
+ let cur_path = cur_item.Path
+ let content;
+ if ( cur_path.match(new RegExp('/ip[fn]s/')) ) {
+   content = await getContentofIpfsPath(cur_path);
+ } else {
+   content = await getContentofMfsPath(cur_path);
+ }
 
 
  let [pin_status,pin_through] = splitPinFullStatus(cur_item.FullStatus)

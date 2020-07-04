@@ -193,6 +193,10 @@ function ipfsPinRm(hash) {
 	 .catch(err => console.error(err, hash))
  } 
  
+function getContentofIpfsPath(ipfsPath) {
+   let  url = api_url + 'cat?arg='+ipfsPath
+   return fetchRespCatch(url)
+}
 
 function getContentofMfsPath(mfsPath) {
    let  url = api_url + 'files/read?arg='+mfsPath
@@ -207,8 +211,8 @@ function saveSingleFile() {
    let content = document.getElementById("file_contentid").value;
    console.log(callee+'.content:',content);
 
-   return ipfsWriteText(mfs_path, content)
-   .then ( _ => { console.log(callee+'.mfs_path updated')})
+   return ipfsWriteText(mfs_path, content) // testing truncates !!!
+   .then ( _ => { console.log(callee+'.mfs_path: '+mfs_path+' updated')})
 	 .catch(err => console.error(err))
 } 
 
