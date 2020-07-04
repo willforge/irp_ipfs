@@ -198,5 +198,17 @@ function getContentofMfsPath(mfsPath) {
    let  url = api_url + 'files/read?arg='+mfsPath
    return fetchRespCatch(url)
 }
+function saveSingleFile() {
+   let [callee, caller] = functionNameJS();
 
+   let mfs_path = document.getElementById("file_pathid").innerHTML;
+   console.log(callee+'.mfs_path:',mfs_path);
+
+   let content = document.getElementById("file_contentid").value;
+   console.log(callee+'.content:',content);
+
+   return ipfsWriteText(mfs_path, content)
+   .then ( _ => { console.log(callee+'.mfs_path updated')})
+	 .catch(err => console.error(err))
+} 
 

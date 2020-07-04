@@ -11,11 +11,22 @@
   /!\ doesn't work due to "text/plain" i.e. a proxy
 	<script src="https://raw.githubusercontent.com/michel47/snippets/master/js/essential.js"></script>
 	<script src="https://github.com/michel47/snippets/raw/7ea10/js/essential.js"></script>
-	<script src="../jsring/js/ipfs.js"></script>
+	<script id=js src="../jsring/js/ipfs.js"></script>
 
 -->
 	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
-	<script src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+	<script id=js src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+  <script><!-- use local js file -->
+  (async _ => {  if (document.location.href.match('michel')) {
+      console.log(document.location);
+      let js = document.getElementById('js')
+      console.log('js: ',js)
+      js.src='../jsring/js/ipfs.js';
+      await js.onload(_ => { console.log('js loaded')})
+      console.log(document.getElementById('js').src)
+    }
+  })()
+  </script>
 </head>
 
 <body>
@@ -55,6 +66,7 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" size=56 value="/
     </tr>
 </table>
 content:<br><textarea id=file_contentid>file's content</textarea>
+<br><button onclick="saveSingleFile()">save</button>
 <div>
 
 </div>
@@ -287,7 +299,7 @@ async function display_file_content() {
  let cur_item = await provideItem('curItem')
 
  console.log(callee+'.cur_item: ',cur_item)
- let mfs_path = item.Path
+ let mfs_path = cur_item.Path
  let content = await getContentofMfsPath(mfs_path);
 
 
