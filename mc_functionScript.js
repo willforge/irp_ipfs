@@ -1,12 +1,10 @@
-
 // assumed api_url is already defined ...
 
-if (typeof(ipfsversion) == 'undefined') {
-//  ipfsVersion().then( v => { ipfsversion = v })
-} else {
-  let [callee, caller] = functionNameJS();
-  console.log("TEST."+callee+'.ipfsversion: ',ipfsversion);
-}
+
+var thisscript = document.currentScript
+thisscript.version = '1.0';
+thisscript.name = thisscript.src.replace(RegExp('.*/([^/]+)$'),"$1");
+console.log(thisscript.name+': '+thisscript.version);
 
 
 function getInputValue(id) {
