@@ -104,6 +104,7 @@ async function provideItem(ofwhat) {
   } else if (ofwhat == 'curItem') {
     // created (build)
     let mfs_path = getInputValue('mfs_pathinputid'); // provide Input !
+    console.log(callee+'.rebuild('+ofwhat+').mfs_path:',mfs_path);
     var stat = await getStatofMfsPath(mfs_path);
 
     let item = stat;
@@ -203,14 +204,13 @@ function getContentofMfsPath(mfsPath) {
 function saveSingleFile() {
    let [callee, caller] = functionNameJS();
 
-   let mfs_path = document.getElementById("file_pathid").innerHTML;
-   console.log(callee+'.mfs_path:',mfs_path);
+   let file_path = document.getElementById('file_pathsaveid').value;
+   console.log(callee+'.file_path:',file_path);
 
    let content = document.getElementById("file_contentid").value;
    console.log(callee+'.content:',content);
-
-   return ipfsWriteText(mfs_path, content) // testing truncates !!!
-   .then ( _ => { console.log(callee+'.mfs_path: '+mfs_path+' updated')})
+   return ipfsWriteText(file_path, content) // v0.6.0 truncate works !!!
+   .then ( _ => { console.log(callee+'file_path: '+file_path+' updated')})
 	 .catch(err => console.error(err))
 } 
 

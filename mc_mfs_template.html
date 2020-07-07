@@ -26,6 +26,12 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" size=56 value="/
 <button type=button onclick="action('Clear & Display')">display</button>
 </div>
 <hr>
+<div id=adddivid>
+add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileName(this)"> add under name
+<input type="text"  name="filepath" value="" placeholder="mfs file path" id="file_addpathid">
+<button name=add onclick="action('Upload & Display')">OK</button>
+</div>
+<hr>
 <div id=outputdivid>
 <h2>Outputs</h2>
 <table id=directory_contentid border=1>
@@ -44,8 +50,9 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" size=56 value="/
     </tr>
     </tbody>
 </table>
-<div>
+</div>
 <hr>
+<div>
 <table id=file_attributesid border=1>
     <tr><th colspan=2><h4 id="file_pathid" class="whiteOnDarkBlue">filepath</h4></th>
     <tr><th>pin</th><th>hash</th>
@@ -55,9 +62,9 @@ mfs: <input type=text id=mfs_pathinputid placeholder="mfs_path" size=56 value="/
     </tr>
 </table>
 content:<br><textarea id=file_contentid>file's content</textarea>
-<br><button onclick="saveSingleFile()">save</button>
-<div>
-
+<br>
+save as <input id=file_pathsaveid name=pathname type=text value="/tmp/myfile.txt" placeholder="file-location-to-be-saved-to">
+<button onclick="saveSingleFile()">save</button>
 </div>
 
 </body>
@@ -97,22 +104,67 @@ var stored = {};
 
 // NOTE FOR NEXT TIME (TBD) :
 
-// build dependency tree...
-// broke '..' w/ stored['curItem']
-
-// split root=/ipfs/Qm and mutable_path
-// allow /ipfs/Qm1234 in mfs: input
+// remove and publish
+// build dependency tree... (2 nodes)
 
 display();
 
 function action(what) {
  let [callee, caller] = functionNameJS(); // logInfo("message !")
  console.log(callee+': '+what);
- stored['curItem']=null;
- display();
+ switch (what) {
+ case 'Upload & Display':
+  uploadFile().then( _ => { display() });
+  // /!\ do not do .then(display()) !
+  // or uploadFile().then(display);
+  break;
+ case 'Clear & Display':
+ default: 
+  stored['curItem']=null;
+  display();
+ }
 }
+
+
+function preFillFileName(obj) {
+ let [callee, caller] = functionNameJS(); // logInfo("message !")
+  console.log(obj.files)
+ let mfs_path = document.getElementById('mfs_pathinputid').value
+ let file_addpath = mfs_path + obj.files[0].name
+ document.getElementById('file_addpathid').value = file_addpath
+}
+async function uploadFile() {
+ let [callee, caller] = functionNameJS(); // logInfo("message !")
+ let file_addpath = document.getElementById('file_addpathid').value;
+ let file = document.getElementById('FakePathId').files[0]
+ let content = await getFileContent(file);
+ console.log(callee+'.file_addpath:',file_addpath)
+ console.log(callee+'.file:',file)
+ console.log(callee+'content:',content)
+
+ let hash = await ipfsWriteBinary(file_addpath, content)
+ console.log(callee+'.write-completed:', hash);
+ return hash;
+}
+
+function getFileContent(file) {
+ let [callee, caller] = functionNameJS(); // logInfo("message !")
+ let reader = new FileReader();
+     reader.readAsBinaryString(file)
+ 
+ return load(reader)
+    .then( event => {
+          console.log(callee+'.event:',event)
+          let content = event.target.result;
+          return content
+          })
+ .catch(console.error)
+
+}
+
 async function display() {
 let [callee, caller] = functionNameJS(); // logInfo("message !")
+console.error(callee+'.info: entered');
 let cur_item = await provideItem('curItem');
 
 if (cur_item.Type == 'Directory') {
@@ -304,6 +356,7 @@ async function display_file_content() {
  console.log(callee+'.cur_item.FullStatus: ',cur_item.FullStatus)
 
  document.getElementById('file_pathid').innerHTML = cur_item.Path
+ document.getElementById('file_pathsaveid').value = cur_item.Path
 
  let row = document.getElementById('file_attributesid').rows[2];
  console.log(callee+'.row: ',row);
