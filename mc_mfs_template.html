@@ -5,17 +5,22 @@
 	<title>Mfs Files Management</title>
 	<link rel="stylesheet" href="style.css"> 
 
-<!--
-	<script src="../snippets/js/essential.js"></script>
+       <script src="../mychelium/js/src/sha256.min.js" crossorigin="anonymous"></script>
+	     <script src="../snippets/js/essential.js"></script>
+	     <script id=js src="../jsring/js/ipfs.js"></script>
+  <!--
+	     <script src="../snippets/js/mychelium.js"></script>
+	--> <!--
+	     /!\ doesn't work due to "text/plain" i.e. a proxy
+	     <script src="https://raw.githubusercontent.com/michel47/snippets/master/js/essential.js"></script>
+	     <script src="https://github.com/michel47/snippets/raw/7ea10/js/essential.js"></script>
 
-  /!\ doesn't work due to "text/plain" i.e. a proxy
-	<script src="https://raw.githubusercontent.com/michel47/snippets/master/js/essential.js"></script>
-	<script src="https://github.com/michel47/snippets/raw/7ea10/js/essential.js"></script>
-
-	<script id=js src="../jsring/js/ipfs.js"></script>
--->
+	<script src="https://michel47.github.io/snippets/js/mychelium.js"></script>
+	--> <!--
+  <script src="https://cdn.jsdelivr.net/gh/mychelium/js@9768641/dist/sha256.min.js" integrity="sha256-YIafx9wlTYK6CHM0cY15DbyqIN2pA/Yy4QpMrwf9Cpg=" crossorigin="anonymous"></script>
 	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
 	<script class=exp src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+	-->
 </head>
 
 <body>
@@ -32,12 +37,12 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
 <button name=add onclick="action('Upload & Display')">OK</button>
 </div>
 <hr>
-<div id=outputdivid>
 <h2>Outputs</h2>
+<div id=directory_divid>
 <table id=directory_contentid border=1>
     <thead>
-    <tr><th colspan=4><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
-    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th></tr>
+    <tr><th colspan=5><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
+    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th><th>publish</th></tr>
     </thead>
     <tbody>
     <tr id=dir_row0id class=ls_row">
@@ -47,12 +52,14 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
     <td class=file_type>fileType</td>
     <td class=file_name><a class=file_name_click href=#>fileName</a></td>
     <td class=file_hash><a class=file_hash_link href=#>QmHash</a></td>
+		<td class=file_publish><button class=file_publish_click>Publish</button>
+    </td>
     </tr>
     </tbody>
 </table>
 </div>
 <hr>
-<div>
+<div id=file_divid>
 <table id=file_attributesid border=1>
     <tr><th colspan=2><h4 id="file_pathid" class="whiteOnDarkBlue">filepath</h4></th>
     <tr><th>pin</th><th>hash</th>
@@ -65,18 +72,16 @@ content:<br><textarea id=file_contentid>file's content</textarea>
 <br>
 save as <input id=file_pathsaveid name=pathname type=text value="/tmp/myfile.txt" placeholder="file-location-to-be-saved-to">
 <button onclick="saveSingleFile()">save</button>
+<button onclick="closeSingleFile()">close</button> 
 </div>
 
 </body>
 
 <script src="mc_functionScript.js"></script>
 <script>
-// mapping ID -> function
-const outputs = {
-  'directory_contentid': display_directory_content
-}
 // type mapping
 const typenames = [ 'file','dir','link','others','...' ]
+const typedesc = [ 'File','Directory','Link','Others','...' ]
 
 var stored = {};
 
@@ -125,6 +130,14 @@ function action(what) {
  }
 }
 
+function closeSingleFile() {
+   let [callee, caller] = functionNameJS();
+   console.log(callee+'.entering');
+   document.getElementById('mfs_pathinputid').value = item.DirName
+   stored['curItem'] = null
+   display()
+   
+}
 
 function preFillFileName(obj) {
  let [callee, caller] = functionNameJS(); // logInfo("message !")
@@ -133,6 +146,8 @@ function preFillFileName(obj) {
  let file_addpath = mfs_path + obj.files[0].name
  document.getElementById('file_addpathid').value = file_addpath
 }
+
+
 async function uploadFile() {
  let [callee, caller] = functionNameJS(); // logInfo("message !")
  let file_addpath = document.getElementById('file_addpathid').value;
@@ -163,121 +178,133 @@ function getFileContent(file) {
 }
 
 async function display() {
-let [callee, caller] = functionNameJS(); // logInfo("message !")
-console.error(callee+'.info: entered');
-let cur_item = await provideItem('curItem');
+   let [callee, caller] = functionNameJS(); // logInfo("message !")
+   console.error(callee+'.info: entered');
+   let cur_item = await provideItem('curItem');
 
-if (cur_item.Type == 'Directory') {
-  display_directory_content(cur_item);
-} else if (cur_item.Type == 'File') {
-  display_file_content(cur_item);
-} else {
-  console.error(callee+'.cur_item.Type:',cur_item.Type);
-}
-
+   if (cur_item.Type == 'Directory') {
+      display_directory_content(cur_item);
+   } else if (cur_item.Type == 'File') {
+      display_file_content(cur_item);
+   } else {
+      console.error(callee+'.cur_item.Type:',cur_item.Type);
+   }
 }
 
 async function display_directory_content(cur_item) {
-let [callee, caller] = functionNameJS(); // logInfo("message !")
-  let mfs_path = cur_item.Path
+   let [callee, caller] = functionNameJS(); // logInfo("message !")
+   console.log(callee+'.input.cur_item:',cur_item)
+   let mfs_path = cur_item.Path
 
-  
-  let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
-  if (immutable) { // special reduction for /ipfs/Qm1234/..
-     // mfs_path = root + mfs_path
-     // root = /ipfs%2FQm or / 
-     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TBD
-     mfs_path = mfs_path.replace(new RegExp('/ip[fn]s/$'),'/')
-  } else {
-     mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
-  }
-  let table = await fetch_directory_content(mfs_path);
+      let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
+      if (immutable) { // special reduction for /ipfs/Qm1234/..
+         // mfs_path = root + mfs_path
+         // root = /ipfs%2FQm or / 
+         mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'') // TBD
+            mfs_path = mfs_path.replace(new RegExp('/ip[fn]s/$'),'/')
+      } else {
+         mfs_path = mfs_path.replace(new RegExp('[^/]+/\.\./'),'')
+      }
+   let table = await fetch_directory_content(mfs_path);
 
-  let table_of_content = table.TOC
-  let te = document.getElementById('directory_contentid')
-  
-  document.getElementById('directory_pathid').innerHTML = mfs_path
+   let table_of_content = table.TOC
+      let te = document.getElementById('directory_contentid')
 
-  clear_display_directory_content();
+      document.getElementById('directory_pathid').innerHTML = mfs_path
+      document.getElementById('directory_divid').style.display = ''
+      document.getElementById('file_divid').style.display = 'none'
 
-  for (item of table_of_content) {
-   console.log('display_directory_content.item:',item)
+      clear_display_directory_content();
 
-   item.DirName = mfs_path; 
-   let filename = item.Name
-   //stored['item'] = item;
-  
+   for (item of table_of_content) {
+      console.log(callee+'.item:',item);
 
-   let hash = item.Hash
-   let type = item.Type
-   let size = item.Size
+      item.DirName = mfs_path; 
+      let filename = item.Name;
+      //stored['item'] = item;
+      let hash = item.Hash;
+      let type = item.Type;
+      let size = item.Size;
 
-   item.FullStatus = await getPinStatus(hash)
+      item.FullStatus = await getPinStatus(hash);
 
-   if (type == 'Directory') { filename += '/'; } // append a trailing / to directories
-   item.Path = mfs_path + filename;
+      if (type == 'Directory') { // append a trailing / to directories
+        filename += '/';
+      }
+      item.Path = mfs_path + filename;
 
-   console.log('row: ',item.FullStatus,filename,hash,type);
-   display_row(item); // /!\ problem w/ promise ???
- }
- console.log('table: '+ te.rows.length + ' rows')
+      console.log(callee+'.row: ',item.FullStatus,filename,hash,type);
+      display_row(item);
+   }
+   console.log('table: '+ te.rows.length + ' rows')
 
 }
 
 function clear_display_directory_content() {
-let [callee, caller] = functionNameJS(); // logInfo("message !")
+   let [callee, caller] = functionNameJS(); // logInfo("message !")
    let e = document.getElementById('directory_contentid');
-   console.log(callee+'.template_row:',e.rows[2])
-   e.rows[2].style.display='none'
-   
+   console.log(callee+'.template_row:',e.rows[2]);
+   e.rows[2].style.display='none';
+
    for (i = e.rows.length-1; i > 2; i--) {
-     e.deleteRow(i)
+      e.deleteRow(i)
    }
    //console.log('nrow after delete:',e.rows.length)
 }
 
 
 function display_row(item) {
-let [callee, caller] = functionNameJS(); // logInfo("message !")
-   console.log('display_row:',item.Name)
-   let e = document.getElementById('directory_contentid');
-   let last = e.rows.length-1
-   let row = e.rows[last];
-   let newrow = e.insertRow(-1); // insert in last position
+   let [callee, caller] = functionNameJS(); // logInfo("message !");
+   console.log('display_row:',item.Name);
+   let table = document.getElementById('directory_contentid');
+   let last = table.rows.length-1;
+   let row = table.rows[last];
+   let newrow = table.insertRow(-1); // insert in last position;
    newrow.innerHTML = row.innerHTML; // copy previous row content
 
+   newrow.setAttribute('id',item.Hash) // use for toglepin's row-identification
+      console.log(callee+'.newrow:',newrow);
    display_pin(item,newrow);
+   newrow.getElementsByClassName('file_type')[0].innerHTML = item.Type; // typenames[item.Type];
 
-   let file_name_click=newrow.getElementsByClassName('file_name_click')[0]
+   let file_name_click=newrow.getElementsByClassName('file_name_click')[0];
    file_name_click.onclick = function() {
-     document.getElementById('mfs_pathinputid').value = item.Path
-     //stored['QmHash'] = item.Hash
-     stored['curItem'] = item
-     display()
+      document.getElementById('mfs_pathinputid').value = item.Path
+         //stored['QmHash'] = item.Hash
+         stored['curItem'] = item
+         display();
    }
    file_name_click.innerHTML = item.Name;
 
-   let file_hash_link=newrow.getElementsByClassName('file_hash_link')[0]
-     file_hash_link.href = 'http://localhost:8080/ipfs/'+item.Hash
-     file_hash_link.innerHTML = item.Hash;
+   let file_hash_link=newrow.getElementsByClassName('file_hash_link')[0];
+   console.log(callee+'.file_hash_link',file_hash_link);
+   file_hash_link.href = 'http://localhost:8080/ipfs/'+item.Hash;
+   file_hash_link.innerHTML = item.Hash;
 
-   newrow.getElementsByClassName('file_type')[0].innerHTML = item.Type; // typenames[item.Type];
-   console.log('newrow: ',newrow);
+   let file_publish_click = newrow.getElementsByClassName('file_publish_click')[0];
+   console.log(callee+'.file_publish_click:',file_publish_click);
+   file_publish_click.onclick = async function () {
+      publishHistory(item);
+      console.log(callee+'.debug')
+      let p = await ipfsPublish(item.Path);
+      console.log(callee+'.p:',p)
+      return p
+   }
+   console.log(callee+'.result.newrow: ',newrow);
+
 }
 
 function display_pin(item,row) {
-let [callee, caller] = functionNameJS(); // logInfo("message !")
-
-   let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
-
-   let btn_pin_status_link = row.getElementsByClassName('pin_status_link')[0]
-   let status_span_el = row.getElementsByClassName('pin_status_span')[0]
+   let [callee, caller] = functionNameJS(); // logInfo("message !");
+   let [pin_status,pin_through] = splitPinFullStatus(item.FullStatus);
+   let btn_pin_status_link = row.getElementsByClassName('pin_status_link')[0];
+   let status_span_el = row.getElementsByClassName('pin_status_span')[0];
 
    if (pin_status == 'indirect') {
       btn_pin_status_link.onclick = function () {
          let new_path = '/ipfs/'+pin_through+'/';
          document.getElementById('mfs_pathinputid').value = new_path
-         stored['curItem'] = { Path:new_path, Hash:pin_through, Type:'Directory', Size:0, DirName:'/',Name:new_path }
+            stored['curItem'] = { Path:new_path, Hash:pin_through, Type:'Directory', Size:0, DirName:'/',Name:new_path }
          display()
       }
       btn_pin_status_link.innerHTML = pin_through.substr(0,9);
@@ -288,89 +315,94 @@ let [callee, caller] = functionNameJS(); // logInfo("message !")
 
       status_span_el.style.display = ''; // display it !
    } else {
-       status_span_el.style.display = 'none'
+      status_span_el.style.display = 'none'
    }
 
    let button = row.getElementsByClassName('pin_status_click')[0]
-       button.innerHTML = pin_status
-       button.setAttribute('name', item.Hash) // update QmHash's name
+      button.innerHTML = pin_status
+      button.setAttribute('name', item.Hash) // update QmHash's name
 
-     button.onclick = function() {
-       let [callee, caller] = functionNameJS();
-       let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
-       console.log(callee+'.item.FullStatus:',item.FullStatus);
-       console.log(callee+'.cur_pin_status:',cur_pin_status);
+      button.onclick = function() {
+         let [callee, caller] = functionNameJS();
+         let [cur_pin_status,pin_through] = splitPinFullStatus(item.FullStatus)
+            console.log(callee+'.item.FullStatus:',item.FullStatus);
+         console.log(callee+'.cur_pin_status:',cur_pin_status);
 
-       return togglePinStatus(cur_pin_status,item.Hash)
-       .then( full_status => {  
-         console.log(callee+'.full_status: ',full_status);
-         item.FullStatus = full_status
-         let [new_pin_status,qm_through] = splitPinFullStatus(full_status) // update after toggle !
+         return togglePinStatus(cur_pin_status,item.Hash)
+            .then( full_status => {  
+                  console.log(callee+'.full_status: ',full_status);
+                  item.FullStatus = full_status
+                  let [new_pin_status,qm_through] = splitPinFullStatus(full_status) // update after toggle !
 
-         let elems = document.getElementsByName(item.Hash)
-         console.log(callee+'.elems: ',elems)
-         for (let e of elems) {
-            e.innerHTML = new_pin_status
-         }
-         if (new_pin_status == 'indirect') {
-            btn_pin_status_link.onclick = function () {
-                let new_path = '/ipfs/'+qm_through+'/';
-                document.getElementById('mfs_pathinputid').value = new_path
-                stored['curItem'] = { Path:new_path, Hash:qm_through, Type:'Directory', Size:0, DirName:'/',Name:new_path }
-                display()
-    
-            }
-            console.log(callee+'.btn_pin_status_link: ',btn_pin_status_link);
-            btn_pin_status_link.innerHTML = qm_through.substr(0,9);
-            //btn_pin_status_link.href = 'http://localhost:8080/ipfs/'+qm_through
-            status_span_el.style.display = ''; // display it !
-         }
+                  let elems = document.getElementsByName(item.Hash)
+                  console.log(callee+'.elems: ',elems)
+                  for (let e of elems) {
+                  e.innerHTML = new_pin_status
+                  }
+                  if (new_pin_status == 'indirect') {
+                  btn_pin_status_link.onclick = function () {
+                  let new_path = '/ipfs/'+qm_through+'/';
+                  document.getElementById('mfs_pathinputid').value = new_path
+                  stored['curItem'] = { Path:new_path, Hash:qm_through, Type:'Directory', Size:0, DirName:'/',Name:new_path }
+                  display()
 
-       })
+                  }
+                  console.log(callee+'.btn_pin_status_link: ',btn_pin_status_link);
+                  btn_pin_status_link.innerHTML = qm_through.substr(0,9);
+                  //btn_pin_status_link.href = 'http://localhost:8080/ipfs/'+qm_through
+                  status_span_el.style.display = ''; // display it !
+                  }
 
-     }
+            })
+
+      }
 
 }
 
 async function display_file_content() {
- let [callee, caller] = functionNameJS();
+   let [callee, caller] = functionNameJS();
 
- console.log(callee+'.stored[curItem]: ',stored['curItem'])
+   console.log(callee+'.stored[curItem]: ',stored['curItem']);
 
- let cur_item = await provideItem('curItem')
+   let cur_item = await provideItem('curItem');
 
- console.log(callee+'.cur_item: ',cur_item)
- let cur_path = cur_item.Path
- let content;
- if ( cur_path.match(new RegExp('/ip[fn]s/')) ) {
-   content = await getContentofIpfsPath(cur_path);
- } else {
-   content = await getContentofMfsPath(cur_path);
- }
+   console.log(callee+'.cur_item: ',cur_item);
+   let cur_path = cur_item.Path;
+   let content;
+   if ( cur_path.match(new RegExp('/ip[fn]s/')) ) {
+      content = await getContentofIpfsPath(cur_path);
+   } else {
+      content = await getContentofMfsPath(cur_path);
+   }
 
+   let hash = cur_item.Hash;
+   if(typeof(cur_item.FullStatus) == 'undefined' || cur_item.FullStatus == null) {
+     cur_item.FullStatus = await getPinStatus(hash)
+   }
+   let [pin_status,pin_through] = splitPinFullStatus(cur_item.FullStatus);
 
- let [pin_status,pin_through] = splitPinFullStatus(cur_item.FullStatus)
- let hash = cur_item.Hash
+   console.log(callee+'.cur_item.Name: ',cur_item.Name);
+   console.log(callee+'.cur_item.FullStatus: ',cur_item.FullStatus);
 
- console.log(callee+'.cur_item.Name: ',cur_item.Name)
- console.log(callee+'.cur_item.FullStatus: ',cur_item.FullStatus)
+   document.getElementById('file_pathid').innerHTML = cur_item.Path;
+   document.getElementById('file_pathsaveid').value = cur_item.Path;
 
- document.getElementById('file_pathid').innerHTML = cur_item.Path
- document.getElementById('file_pathsaveid').value = cur_item.Path
+   let row = document.getElementById('file_attributesid').rows[2];
+   console.log(callee+'.row: ',row);
 
- let row = document.getElementById('file_attributesid').rows[2];
- console.log(callee+'.row: ',row);
+   let cell = row.getElementsByClassName('pin_status_cell')[0]
+      cell.setAttribute('name', hash); // update attribute name w/ QmHash's value
+   cell.innerHTML = pin_status;
 
- let cell = row.getElementsByClassName('pin_status_cell')[0]
- cell.setAttribute('name', hash); // update attribute name w/ QmHash's value
- cell.innerHTML = pin_status;
+   let link = row.getElementsByClassName('file_hash_link')[0]
+      link.innerHTML = hash
+      link.href = 'http://127.0.0.1:8080/ipfs/'+hash
+      console.log(callee+'.link: ',link);
 
- let link = row.getElementsByClassName('file_hash_link')[0]
- link.innerHTML = hash
- link.href = 'http://127.0.0.1:8080/ipfs/'+hash
- console.log(callee+'.link: ',link);
+   document.getElementById('file_contentid').value = content;
+   document.getElementById('directory_divid').style.display = 'none'
+   document.getElementById('file_divid').style.display = ''
 
- document.getElementById('file_contentid').value = content;
 }
 
 

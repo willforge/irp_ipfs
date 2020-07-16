@@ -30,61 +30,61 @@ async function getStatofMfsPath(mfs_path) {
 }  
 
 function fetch_directory_content(mfs_path) {
-  let [callee, caller] = functionNameJS(); // logInfo("message !")
-  let parent_path = mfs_path + '../';
-  let immutable = mfs_path.match(new RegExp('/ip[fn]s'))
-      console.log(callee+'.immutable: ',immutable)
+   let [callee, caller] = functionNameJS(); // logInfo("message !")
+   let parent_path = mfs_path + '../';
+   let immutable = mfs_path.match(new RegExp('/ip[fn]s'));
+   console.log(callee+'.immutable: ',immutable);
 
-  if (mfs_path == '/' || immutable) {
-    parent_path = '/';
-  }
-  console.log(callee+'.parent_path: '+parent_path)
-  let promise_parent_hash = getHashofMfsPath(parent_path)
+   if (mfs_path == '/' || immutable) {
+      parent_path = '/';
+   }
+   console.log(callee+'.parent_path: '+parent_path)
+      let promise_parent_hash = getHashofMfsPath(parent_path)
 
-  let url; // .. long=true for IPFS 0.5
-  let promise_dir_content
-  if ( immutable ) {
-    url = api_url + 'file/ls?arg='+mfs_path
-    promise_dir_content = fetchRespCatch(url)
-    .then( json => {
-      console.log(callee+'.immutable.ls.json: ',json)
-      let hash = json.Arguments[mfs_path]
-      let content = json.Objects[hash].Links
-      console.log(callee+'.file.ls: ',content)
-      json.Entries = content; // map as if it was a "files/ls" API call
-      const typetonum = { 'Directory': 1,'File': 0 }
-      json.Entries.forEach( e => { e.Type = typetonum[e.Type] } )
-      return json;
-    })
-   
-  } else if ( ipfsversion == '0.4.22') {
-    url = api_url + 'files/ls?arg='+mfs_path+'&l=true&U=true'
-    promise_dir_content = fetchRespCatch(url)
-    .then ()
-  } else {
-    console.log(callee+'.ipfsversion: ',ipfsversion)
-    url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
-    promise_dir_content = fetchRespCatch(url)
-    .then ()
-  }
+      let url; // .. long=true for IPFS 0.5
+   let promise_dir_content
+      if ( immutable ) {
+         url = api_url + 'file/ls?arg='+mfs_path
+            promise_dir_content = fetchRespCatch(url)
+            .then( json => {
+                  console.log(callee+'.immutable.ls.json: ',json)
+                  let hash = json.Arguments[mfs_path]
+                  let content = json.Objects[hash].Links
+                  console.log(callee+'.file.ls: ',content)
+                  json.Entries = content; // map as if it was a "files/ls" API call
+                  const typetonum = { 'Directory': 1,'File': 0 }
+                  json.Entries.forEach( e => { e.Type = typetonum[e.Type] } )
+                  return json;
+                  })
 
-  return Promise.all([promise_parent_hash,promise_dir_content]) 
-  .then(_ => {
-     [parent_hash, obj] = _
-     console.log(callee+'.promise.results: ',_);
-     let table_of_content = obj.Entries;
-     table_of_content.forEach( e => { e.Type = ['File','Directory'][e.Type] } )
-     if (table_of_content == null) {
-       table_of_content = [];
-     }
-     let parent_item = { Name:'..', Type:'Directory', Size:0, Hash:parent_hash, Path:mfs_path }
-     console.log(callee+'.parent_item: ',parent_item);
-     table_of_content.unshift(parent_item)
-     console.log(callee+'.TOC:',table_of_content);
-     return { "dirname":mfs_path, "parent":parent_hash, "TOC":table_of_content };
+      } else if ( ipfsversion == '0.4.22') {
+         url = api_url + 'files/ls?arg='+mfs_path+'&l=true&U=true'
+            promise_dir_content = fetchRespCatch(url)
+            .then ()
+      } else {
+         console.log(callee+'.ipfsversion: ',ipfsversion)
+            url = api_url + 'files/ls?arg='+mfs_path+'&long=true&U=true'
+            promise_dir_content = fetchRespCatch(url)
+            .then ()
+      }
+
+   return Promise.all([promise_parent_hash,promise_dir_content]) 
+      .then(_ => {
+            [parent_hash, obj] = _
+            console.log(callee+'.promise.results: ',_);
+            let table_of_content = obj.Entries;
+            table_of_content.forEach( e => { e.Type = ['File','Directory'][e.Type] } )
+            if (table_of_content == null) {
+            table_of_content = [];
+            }
+            let parent_item = { Name:'..', Type:'Directory', Size:0, Hash:parent_hash, Path:mfs_path }
+            console.log(callee+'.parent_item: ',parent_item);
+            table_of_content.unshift(parent_item)
+	    console.log(callee+'.table_of_content:',table_of_content);
+            return { "dirname":mfs_path, "parent":parent_hash, "TOC":table_of_content };
 
 
-   })
+            })
    .catch( obj => { logError(callee+'.catch',obj) })
 }
 
@@ -98,8 +98,10 @@ function getHashofMfsPath(mfs_path) {
 
 async function provideItem(ofwhat) {
   let [callee, caller] = functionNameJS(); // logInfo("message !")
+    console.log(callee+'.ofwhat',ofwhat);
+    
   if (typeof(stored[ofwhat]) != 'undefined' && stored[ofwhat] != null) {  
-    console.log(callee+'.retrieve('+ofwhat+'):',stored[ofwhat]);
+	console.log(callee+'.stored.retrieve('+ofwhat+'):',stored[ofwhat]);
     return stored[ofwhat]
   } else if (ofwhat == 'curItem') {
     // created (build)
@@ -112,7 +114,7 @@ async function provideItem(ofwhat) {
     let slash = mfs_path.lastIndexOf('/')
     item.DirName = mfs_path.substring(0,slash+1);
     item.Name = mfs_path.substr(slash+1);
-    console.log(callee+'.item:',item);
+	console.log(callee+'.stored.curItem.item:',item);
     stored[ofwhat] = item;
     return item;
   } else {
@@ -201,6 +203,33 @@ function getContentofMfsPath(mfsPath) {
    let  url = api_url + 'files/read?arg='+mfsPath
    return fetchRespCatch(url)
 }
+
+async function publishHistory(item) {
+  let [callee, caller] = functionNameJS(); // logInfo("message !")
+  let hash = item.Hash
+  let name = item.Name
+  let date = new Date;
+  console.log(callee+'.date:',date);
+  let tics = Math.floor(date.getTime() / 1000);
+  console.log(callee+'.tics:',tics);
+  let hrecord = hash+': ["'+ item.Path +'",'+ tics +']'
+  console.log(callee+'.hrecord:',hrecord);
+  const historyf = '/.brings/published/history.log';
+  let hhash = await ipfsLogAppend(historyf,hrecord)
+  console.log(callee+'.hhash:',hhash);
+  return hhash
+}
+
+/*
+  const brindexf = '/.brings/published/brindex.log';
+  record = item.Path+': '+'/ipfs/'+whash+'/'+item.Name
+  let bhash = await ipfsFileAppend(record,brindexf)
+  let dhash = await getMFSFileHash('/.brings/');
+  return ipfsNamePublish('self','/ipfs/'+dhash)
+  .then(consLog(callee))
+  .catch(logError)
+*/
+
 function saveSingleFile() {
    let [callee, caller] = functionNameJS();
 
@@ -210,7 +239,13 @@ function saveSingleFile() {
    let content = document.getElementById("file_contentid").value;
    console.log(callee+'.content:',content);
    return ipfsWriteText(file_path, content) // v0.6.0 truncate works !!!
-   .then ( _ => { console.log(callee+'file_path: '+file_path+' updated')})
+	.then ( hash => {
+     stored['curItem'].Hash = hash
+     stored['curItem'].FullStatus = null
+     //stored['curItem'] = null;
+     display()
+     console.log(callee+'file_path: '+file_path+' updated')
+   })
 	 .catch(err => console.error(err))
 } 
 
