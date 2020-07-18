@@ -1,6 +1,10 @@
 h1,h2,h3 {
   background-color: rgb(230, 220, 245);
 }
+a.file_hash_link {
+ text-decoration: none;
+ color: darkgrey;
+}
 textarea#file_contentid {
   width: 90vw;
   height: 24em; // rows: 24;
@@ -32,4 +36,12 @@ th, td {
   border: 1px solid black;
   padding:4px 6px;
 }
+
+#profilepic {
+  float: right;
+}
+.thumbnail {
+  padding: 0;
+}
+
 

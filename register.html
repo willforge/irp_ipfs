@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<title>Add a friend form</title>
+<link href=style.css rel=stylesheet>
+<h3>Add a friend form</h3>
+<form>
+<!img id=profilepic alt=":peerid" src=https://api.adorable.io/avatar/256/:peerid.png></td>
+<b><span id=self>my</span> friends (<span class=shortid>:shortid</span>):</b>
+<br><input type=text name=nickname value="michelc" placeholder="nickname">
+<br><input type=text name=fullname value="Michel Combes" placeholder="fullname">
+<br><input type=text name=city value="" placeholder="city">
+<br><input type=text name=peerkey value="QmcfHufAK9ErQ9ZKJF7YX68KntYYBJngkGDoVKcZEJyRve" placeholder="peerkey">
+<br><input type=text name=obs value="" placeholder="observation">
+<br><input type=text name=phone value="" placeholder="phone number">
+<br><input type=text name=email value="" placeholder="email">
+<br><input type=text name=last4 value="" placeholder="last 4 digits of physical ID">
+<br><input type=text name=peerid value=":peerid" placeholder="peerid" disabled>
+<br><button type=button onclick="addFriend(event)">add</button>
+</form>
+<br>
+
+<div id=output>
+<table id=friendstableid>
+<tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>peerid</th><th>trust</th><th>obs.</th>
+<tr><td>:idx</td>
+<td><!img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
+<td>:nickname</td><td><a href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
+<td>:fullname</td>
+<td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
+<td><button>trust</button></td>
+</table>
+</div>
+
+<script src="js/sha256.js" type=text/javascript></script>
+<script src="js/js-yaml.js" type=text/javascript></script>
+<script src="js/essential.js" type=text/javascript></script>
+<script src="js/ipfs.js" type=text/javascript></script>
+
+<script type=text/javascript>
+const ff = '/my/friends/peerids.yml';
+console.log('ff:',ff)
+let friends = {}
+
+async function main() {
+let yml = await getMFSFileContent(ff);
+console.log('yml:',yml)
+if (typeof(yml.Code) == 'undefined') {
+   friends = window.jsyaml.safeLoad(yml);
+} else {
+  friend = {};
+}
+console.log('friends:',friends)
+display(friends)
+  
+}
+main()
+
+let tic = getTic()
+console.log('tic:',tic)
+
+
+function display(map) {
+  let table = document.getElementById('friendstableid')
+  let pos = 1;
+  clear_table(table,pos);
+  let last = table.rows.length-1;
+  let row = table.rows[last];
+  console.log('map:',map)
+  console.log('map.keys:',Object.keys(map))
+  for (let i in Object.keys(map)) {
+     let key = Object.keys(map)[i]
+     console.log('map['+key+'].nickname:',map[key].nickname)
+   let newrow = table.insertRow(pos); // insert before template-row's position;
+   let buf = row.innerHTML; // copy previous row content
+   buf = buf.replace(':idx',i)
+   let elem = map[key];
+   let shortpeerid = elem.peerid.substr(0,5)+'...'+elem.peerid.substr(-3)
+   buf = buf.replace(':shortpeerid',shortpeerid)
+   let shortpeerkey = elem.peerkey.substr(0,5)+'...'+elem.peerkey.substr(-3)
+   buf = buf.replace(':shortpeerkey',shortpeerkey)
+    for (name of Object.keys(elem)) {
+     console.log('name:',name)
+     console.log('buf.before:',buf)
+    buf = buf.replace(new RegExp(':'+name,'g'),elem[name])
+     console.log('buf.after:',buf)
+    }
+    newrow.innerHTML = buf;
+ 
+  }
+}
+
+async function addFriend(ev) {
+   console.log('ev:',ev)
+   let form = ev.target.parentNode;
+   console.log('form:',form)
+   let query = getQuery(form);
+   let json = query2json(query)
+   console.log('json:',json)
+   key = sha256(json.nickname).substr(0,18)
+   friends[key] = json; // merge w/ existing friends list
+   console.log('friends:',friends)
+   let yml = window.jsyaml.safeDump(friends)
+   console.log('yml:',yml)
+   let hash = await ipfsWriteContent(ff,"--- # friends list (yaml)\n"+yml)
+   
+}
+
+
+function clear_table(t,pos) {
+   console.log('t:',t)
+   t.rows[pos].style.display=''; 
+   //t.rows[pos].style.display='none'; 
+   for (i = t.rows.length-1; i > pos; i--) {
+      t.deleteRow(i)
+   }
+   console.log('nrow after delete:',t.rows.length)
+}
+
+</script>
