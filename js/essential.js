@@ -62,6 +62,7 @@ function query2json(q) {
     let [k,v] = p.split('=');
     v = v.replace(/\+/g,' ');
     v = v.replace(/%2B/g,'+');
+    v = v.replace(/%40/g,'@');
     j[k] = v })
   return j
 }
