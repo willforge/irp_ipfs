@@ -17,15 +17,17 @@
 <br><input type=text name=last4 value="" placeholder="last 4 digits of physical ID">
 <br><input type=text name=peerid value=":peerid" placeholder="peerid" disabled>
 <br><button type=button onclick="addFriend(event)">add</button>
-</form>
+</form>Object
 <br>
 
 <div id=output>
+<h3>friends list</h3>
 <table id=friendstableid>
 <tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>from</th><th>trust</th><th>obs.</th>
 <tr><td>:idx</td>
 <td><img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
-<td class=nickname>:nickname</td><td><a href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
+<td class=nickname>:nickname</td>
+<td><a href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
 <td>:fullname</td>
 <td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
 <td><select name=trust value=":trust" onchange="updateTrust(event)">
@@ -46,6 +48,32 @@ const ff = '/my/friends/peerids.yml';
 console.log('ff:',ff)
 let friends = {}
 
+// detect when peerid is available and feed it to then...
+Promise.resolve(promisedPeerId)
+.then( peerid => {
+      console.error('peerid:',peerid)
+      let e = document.getElementById('profilepic');
+      e.src = e.src.replace(/:peerid/,peerid)
+      e.alt = peerid
+
+      let shortid = peerid.substr(0,7);
+      console.log('shortid: ',shortid);
+      replaceInTagsByClassName('shortid',shortid)
+      return peerid
+})
+.then( replacePeerIdInForm )
+.catch(console.error);
+
+
+/*
+load(window).then( _ => { // on window load ...
+  console.error('peerid:',peerid)
+ });
+*/
+
+
+
+
 async function main() {
 let yml = await getMFSFileContent(ff);
 //console.log('yml:',yml)
@@ -62,19 +90,6 @@ main()
 
 let tic = getTic()
 console.log('tic:',tic)
-load(document).then( _ => { // on window load ... assume peerid is complete
-      console.error('peerid:',peerid)
-      let e = document.getElementById('profilepic');
-      e.src = e.src.replace(/:peerid/,peerid)
-      e.alt = peerid
-  alert('document loaded!')
-      });
-
-
-load(window).then( _ => { // on window load ...
-  console.error('peerid:',peerid)
- });
-
 
 
 function display(friendsmap) {
@@ -93,9 +108,9 @@ function display(friendsmap) {
    let buf = lastrow.innerHTML; // copy previous row content
    buf = buf.replace(':idx',i)
    let friend = friendsmap[key];
-   let shortpeerid = friend.peerid.substr(0,5)+'...'+friend.peerid.substr(-3)
+   let shortpeerid = shortqm(friend.peerid)
    buf = buf.replace(':shortpeerid',shortpeerid)
-   let shortpeerkey = friend.peerkey.substr(0,5)+'...'+friend.peerkey.substr(-3)
+   let shortpeerkey = shortqm(friend.peerkey)
    buf = buf.replace(':shortpeerkey',shortpeerkey)
    for (name of Object.keys(friend)) {
       buf = buf.replace(new RegExp(':'+name,'g'),friend[name]);
@@ -136,9 +151,10 @@ async function updateTrust(ev) {
    console.log(callee+'.nickname:',nickname)
    let key = hashkey(nickname)
    console.log(callee+'.key:',key)
-   console.log(callee+'.record.before:',friends[key])
+   console.log(callee+'.record.before:',JSON.stringify(friends[key]))
+   console.log(callee+'.record.trust.before:',friends[key].trust)
    friends[key]['trust'] = ev.target.value
-   console.log(callee+'.record.after:',friends[key])
+   console.log(callee+'.record.trust.after:',friends[key].trust)
    
    let yml = window.jsyaml.safeDump(friends)
    let hash = await ipfsWriteContent(ff,"--- # friends list (yaml)\n"+yml)
@@ -167,6 +183,10 @@ function hashkey(s) {
    return sha256(s).substr(0,18);
 }
 
+function shortqm(qm) {
+   return qm.substr(0,6)+'...'+qm.substr(-3)
+}
+
 
 function clear_table(t,pos) {
    console.log('t:',t)
@@ -176,6 +196,20 @@ function clear_table(t,pos) {
       t.deleteRow(i)
    }
    console.log('nrow after delete:',t.rows.length)
+}
+
+function replacePeerIdInForm(id) { 
+  let forms = document.getElementsByTagName('form');
+  console.log('forms: ',forms);
+  if (forms.length > 0) {
+     let e = forms[0].elements['peerid'];
+     console.log('peerid: '+id)
+     if (typeof(e) != 'undefined') {
+       console.log(e.outerHTML)
+       e.value = e.value.replace(new RegExp(':peerid','g'),id)
+     }
+  }
+  return id
 }
 
 </script>
