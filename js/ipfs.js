@@ -53,32 +53,10 @@ function ipfsVersion() {
 
 // get and replace the peer id ...
 if (typeof(peerid) == 'undefined') {
- getPeerId()
+ var promisedPeerId = getPeerId()
 .then(id => { peerid = (typeof(id) == 'undefined') ? 'QmYourIPFSisNotRunning' : id; return peerid })
-//.then( replaceNameInGlobalContainer('peerid'))
-// .then( replaceNameInClass('peerid','container') )
-.then( replacePeerIdInForm )
-.then( peerid => {
-  let s = peerid.substr(0,7);
-  console.log('s: ',s);
-  replaceInTagsByClassName('shortid',s)
-})
 .catch(logError);
 
-}
-
-function replacePeerIdInForm(id) { 
-  let forms = document.getElementsByTagName('form');
-  console.log('forms: ',forms);
-  if (forms.length > 0) { 
-     let e = forms[0].elements['peerid'];
-     console.log('peerid: '+id)
-     if (typeof(e) != 'undefined') {
-       console.log(e.outerHTML)
-       e.value = e.value.replace(new RegExp(':peerid','g'),id)
-     }
-  }
-  return id
 }
 
 async function ipfsPublish(pubpath) {
