@@ -23,17 +23,18 @@
 <div id=output>
 <h3>friends list</h3>
 <table id=friendstableid>
-<tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>from</th><th>trust</th><th>obs.</th>
+<tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>from</th><th>trust</th><th>nid</th><th>obs.</th>
 <tr><td>:idx</td>
 <td><img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
-<td class=nickname>:nickname</td>
-<td><a href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
+<td class=nickname title=":key" >:nickname</td>
+<td><a class=peerkey href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
 <td>:fullname</td>
 <td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
 <td><select name=trust value=":trust" onchange="updateTrust(event)">
     <option value=0>untrusted</option>
     <option value=1>trusted</option>
     </select></td>
+<td>:nid</td>
 <td>:obs</td>
 </table>
 </div>
@@ -106,6 +107,7 @@ function display(friendsmap) {
      console.log('friendsmap['+key+'].nickname:',friendsmap[key].nickname)
    let newrow = table.insertRow(pos); // insert before template-row's position;
    let buf = lastrow.innerHTML; // copy previous row content
+   buf = buf.replace(':key',key)
    buf = buf.replace(':idx',i)
    let friend = friendsmap[key];
    let shortpeerid = shortqm(friend.peerid)
@@ -116,6 +118,9 @@ function display(friendsmap) {
       buf = buf.replace(new RegExp(':'+name,'g'),friend[name]);
       if (name == 'trust' && friend.trust == 1 ) { console.log(callee+'.buf.after:',buf) }
    }
+   let nid = getNid('urn:ipns:'+friend.peerkey) // urn = urn:nid:/mfspath
+   buf = buf.replace(':nid',nid)
+
    newrow.innerHTML = buf;
    displayTrust(friend.trust,newrow)
 
@@ -147,10 +152,20 @@ async function updateTrust(ev) {
    console.log(callee+'.input.ev:',ev)
    let el = ev.target.parentNode.parentNode
    console.log(callee+'.el:',el)
-   let nickname = el.getElementsByClassName('nickname')[0].innerHTML;
-   console.log(callee+'.nickname:',nickname)
-   let key = hashkey(nickname)
+   /* 
+   // /!\ hashkey: is unsalted
+   let key = hashkey('urn:ipns:'+peerid) // urn = urn:ipms:hashkey:/mfspath
    console.log(callee+'.key:',key)
+   */
+   
+   let nickname = el.getElementsByClassName('nickname')[0].innerHTML;
+   let key = el.getElementsByClassName('nickname')[0].title;
+   let peerkey = el.getElementsByClassName('peerkey')[0].title;
+
+   console.log(callee+'.nickname:',nickname)
+   console.log(callee+'.key:',key)
+   console.log(callee+'.peerkey:',peerkey)
+
    console.log(callee+'.record.before:',JSON.stringify(friends[key]))
    console.log(callee+'.record.trust.before:',friends[key].trust)
    friends[key]['trust'] = ev.target.value
@@ -170,7 +185,10 @@ async function addFriend(ev) {
    console.log('json:',json)
    json.nickname = json.nickname.replace(/\s+$/,'')
    json.nickname = json.nickname.replace(/\s+/g,'-')
-   let key = hashkey(json.nickname)
+   let key = getNid('urn:ipns:'+json.peerkey)
+
+
+
    friends[key] = json; // merge w/ existing friends list
    console.log('friends:',friends)
    let yml = window.jsyaml.safeDump(friends)
@@ -178,15 +196,6 @@ async function addFriend(ev) {
    let hash = await ipfsWriteContent(ff,"--- # friends list (yaml)\n"+yml)
    
 }
-
-function hashkey(s) {
-   return sha256(s).substr(0,18);
-}
-
-function shortqm(qm) {
-   return qm.substr(0,6)+'...'+qm.substr(-3)
-}
-
 
 function clear_table(t,pos) {
    console.log('t:',t)

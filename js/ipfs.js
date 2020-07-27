@@ -59,6 +59,31 @@ if (typeof(peerid) == 'undefined') {
 
 }
 
+function getNid(string) {
+   let ns36 = BigInt('0x'+sha256(string)).toString(36).substr(0,13)
+   return ns36
+}
+
+function shard_n_key(s) {
+  let s2 = sha256(s)
+  return [s2.substr(-4,3),s2.substr(0,18) ];
+
+}
+function shard(s) {
+   return sha256(s).substr(-4,3);
+}
+
+function hashkey(s) {
+   return sha256(s).substr(0,18);
+}
+
+function shortqm(qm) {
+   return qm.substr(0,6)+'...'+qm.substr(-3)
+}
+
+
+
+
 async function ipfsPublish(pubpath) {
    let [callee, caller] = functionNameJS(); // logInfo("message !")
    let parent;
@@ -107,7 +132,7 @@ async function ipfsPublish(pubpath) {
 }
 
 function ipfsNamePublish(k,v) {
-    var url = api_url + 'name/publish?key='+k+'&arg='+v+'&allow-offline=1&resolve=0';
+    var url = api_url + 'name/publish?key='+k+'&arg='+v+'&allow-offline=true&resolve=false';
     return fetchGetPostJson(url)
     .then(consLog('ipfsNamePublish'))
     .then( json => { return json.Hash })
@@ -143,6 +168,11 @@ function getMFSFileContent(path) {
    let  url = api_url + 'files/read?arg='+path
    return fetchRespCatch(url)
 }
+function ipfsGetFileContent(path) {
+   let  url = api_url + 'cat?arg='+path
+   return fetchRespCatch(url)
+}
+
 
 function ipfsGetContentHash(buf) {
  url = api_url + 'add?file=blob.data&cid-version=0&hash-only=1'

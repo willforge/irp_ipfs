@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+
+<script src="js/sha256.js" type="text/javascript"></script>
+<script src="js/js-yaml.js" type="text/javascript"></script>
+<script src="js/essential.js" type="text/javascript"></script>
+<script src="js/ipfs.js" type="text/javascript"></script>
+<script> console.log(' Hi !') </script>
+
+<p>This is a resolver</p>
+<script>
+
+
+async function main() {
+   console.dir(document.location)
+      let fragment = document.location.hash.slice(1)
+      console.log('resolver.fragment:',fragment)
+
+      let [,nid,nss] = fragment.split(':',3)
+
+      console.log('resolver.nid:',nid)
+      console.log('resolver.nss:',nss)
+
+      let peerids_yaml = await getMFSFileContent('/my/friends/peerids.yml');
+      /*
+      console.log('main.peerids_yaml:',peerids_yaml)
+      let  url = api_url + 'files/read?arg=/my/friends/peerids.yml'
+      let foo = await fetchRespCatch(url)
+      console.log('foo:',foo)
+      */
+
+      if (typeof(peerids_yaml.Code) == 'undefined') {
+         peerids = window.jsyaml.safeLoad(peerids_yaml);
+      } else {
+         console.log('get yaml failed...')
+         peerids = {};
+      }
+
+      var peerid = await Promise.resolve(promisedPeerId);
+      let localnid = getNid('/ipns/'+peerid);
+      console.log('nid:',nid);
+      console.log('localnid:',localnid);
+      console.log('peerids:',peerids);
+      peerids[localnid] = {
+              'peerkey': peerid, "nickname": 'self', "trust": '1', "peerid": peerid };
+
+      if (typeof(peerids[nid]) != 'undefined') {
+         peerkey = peerids[nid]['peerkey'];
+         console.log('peerkey:',peerkey);
+         let [shard,hashkey] = shard_n_key(nss)
+            console.log('hashkey:',hashkey);
+         let brurl = '/ipns/'+peerkey+'/shards/'+shard+'/brindex.log'
+            console.log('brurl:',brurl);
+         let index_yaml = await ipfsGetFileContent(brurl);
+         let lines = index_yaml.split("\n");
+         let address = '/ipfs/QmU1u5ZiH7QFm3dxU8rBgF8FjnHaSYq5KyNePnyH64EVfy/404.htm';
+         for (line of lines) { 
+            let result = line.match(RegExp('^'+hashkey+': (.*)'));
+            if (result) {
+               address = result[1];
+            }
+         }
+         console.log('address: ',address)
+         document.location = gw_url + address
+      }
+
+
+}
+main()
+
+
+
+</script>

@@ -15,13 +15,15 @@
 	     /!\ doesn't work due to "text/plain" i.e. a proxy
 	     <script src="https://raw.githubusercontent.com/michel47/snippets/master/js/essential.js"></script>
 	     <script src="https://github.com/michel47/snippets/raw/7ea10/js/essential.js"></script>
+	<script class=exp src="https://willforge.github.io/jsring/js/ipfs.js"></script>
 
 	<script src="https://michel47.github.io/snippets/js/mychelium.js"></script>
+	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
 	--> <!--
 	-->
   <script src="https://cdn.jsdelivr.net/gh/mychelium/js@9768641/dist/sha256.min.js" integrity="sha256-YIafx9wlTYK6CHM0cY15DbyqIN2pA/Yy4QpMrwf9Cpg=" crossorigin="anonymous"></script>
-	<script src="https://michel47.github.io/snippets/js/essential.js"></script>
-	<script class=exp src="https://willforge.github.io/jsring/js/ipfs.js"></script>
+	<script src="js/essential.js"></script>
+	<script class=exp src="js/ipfs.js"></script>
 </head>
 
 <body>
@@ -42,8 +44,8 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
 <div id=directory_divid>
 <table id=directory_contentid border=1>
     <thead>
-    <tr><th colspan=5><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
-    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th><th>publish</th></tr>
+    <tr><th colspan=6><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
+    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th><th>publish</th><th>permanent link</th></tr>
     </thead>
     <tbody>
     <tr id=dir_row0id class=ls_row">
@@ -55,6 +57,17 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
     <td class=file_hash><a class=file_hash_link href=#>QmHash</a></td>
 		<td class=file_publish><button class=file_publish_click>Publish</button>
     </td>
+    <!-- urn:ipns:peerid:/mfs_path
+         urn:ipms:publicname:/mfs_path : need to be register ...  !
+         urn:nid:/mfs_path w/ nid=hash(/ipns/peerid) or nid=hash(/dns/example.com)
+
+         nid solely gives access to the (br)index.log (not the folder containing the data)
+
+      nid=hash(/ipns/peerid)
+      idxkey = hash(/mfs_dir/./path/file.txt) -> 
+
+    -->
+    <td class=perma_url><a class=perma_url_link href="#" title="permanent link">urn:nid:/mfs_path</a></td>
     </tr>
     </tbody>
 </table>
@@ -112,6 +125,7 @@ var stored = {};
 
 // remove and publish
 // build dependency tree... (2 nodes)
+
 
 display();
 
@@ -219,7 +233,6 @@ async function display_directory_content(cur_item) {
 
    for (item of table_of_content) {
       console.log(callee+'.item:',item);
-
       item.DirName = mfs_path; 
       let filename = item.Name;
       //stored['item'] = item;
@@ -286,13 +299,36 @@ function display_row(item) {
    console.log(callee+'.file_publish_click:',file_publish_click);
    file_publish_click.onclick = async function () {
       publishHistory(item);
-      console.log(callee+'.debug')
-      let p = await ipfsPublish(item.Path);
-      console.log(callee+'.p:',p)
-      return p
+      let urn = update_perma_url_link(item);
+      let path = await ipfsPublish(item.Path);
+      console.log(callee+'.path:',path);
+      return path
    }
+
+
    console.log(callee+'.result.newrow: ',newrow);
 
+}
+
+
+async function update_perma_url_link(item) {
+   let [callee, caller] = functionNameJS(); // logInfo("message !");
+   console.log(callee+'.input.item:',item);
+
+   var peerid = await Promise.resolve(promisedPeerId);
+   let row = document.getElementById(item.Hash);
+   console.log(callee+'.row:',row);
+   let perma_url_link = row.getElementsByClassName('perma_url_link')[0];
+
+   console.log(callee+'.perma_url_link.href:',perma_url_link.href);
+   let ns36 = BigInt('0x'+sha256('/ipns/'+peerid)).toString(36).substr(0,13)
+   let urn = 'urn:' + ns36  + ':' + item.Path
+   const qmresolver = 'QmThhn7niLeuEfCMXhS1SmYgNFobokPxsobveN7RXVeUpk'
+   // perma_url_link.href= 'http://resolver.localhost:8080/ipfs/'+qmresolver+'/#'+urn 
+   perma_url_link.href= './resolver.html#'+urn 
+   perma_url_link.innerHTML= urn
+   console.log(callee+'.perma_url_link:',perma_url_link);
+   return urn
 }
 
 function display_pin(item,row) {
