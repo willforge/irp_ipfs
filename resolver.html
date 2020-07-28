@@ -7,66 +7,79 @@
 <script> console.log(' Hi !') </script>
 
 <p>This is a resolver</p>
+URN: <input id=urn onchange="urnChange(event)" value="urn:nid:/mfs/path"/>
+<span id=resolve>RESOLVING</span> <a id="jump" href="#">...</a>
+<button id=redirect>REDIRECT</button>
 <script>
 
+function urnChange(ev) {
+ urn = ev.target.value
+   let [,nid,nss] = urn.split(':',3)
+      console.log('urnChange.nid:',nid)
+      console.log('urnChange.nss:',nss);
+   TBD('continue later !')
+
+}
 
 async function main() {
-   console.dir(document.location)
-      let fragment = document.location.hash.slice(1)
-      console.log('resolver.fragment:',fragment)
+   console.dir(document.location);
+   let fragment = document.location.hash.slice(1)
+   console.log('resolver.fragment:',fragment);
+   document.getElementById('urn').value=fragment;
 
-      let [,nid,nss] = fragment.split(':',3)
-
+   let [,nid,nss] = fragment.split(':',3)
       console.log('resolver.nid:',nid)
-      console.log('resolver.nss:',nss)
+      console.log('resolver.nss:',nss);
 
-      let peerids_yaml = await getMFSFileContent('/my/friends/peerids.yml');
-      /*
-      console.log('main.peerids_yaml:',peerids_yaml)
-      let  url = api_url + 'files/read?arg=/my/friends/peerids.yml'
-      let foo = await fetchRespCatch(url)
-      console.log('foo:',foo)
-      */
+   let peerids_yaml = await getMFSFileContent('/my/friends/peerids.yml');
 
-      if (typeof(peerids_yaml.Code) == 'undefined') {
-         peerids = window.jsyaml.safeLoad(peerids_yaml);
-      } else {
-         console.log('get yaml failed...')
+   if (typeof(peerids_yaml.Code) == 'undefined') {
+      peerids = window.jsyaml.safeLoad(peerids_yaml);
+   } else {
+      console.log('get yaml failed...')
          peerids = {};
-      }
+   }
 
-      var peerid = await Promise.resolve(promisedPeerId);
-      let localnid = getNid('/ipns/'+peerid);
-      console.log('nid:',nid);
-      console.log('localnid:',localnid);
-      console.log('peerids:',peerids);
-      peerids[localnid] = {
-              'peerkey': peerid, "nickname": 'self', "trust": '1', "peerid": peerid };
+   var peerid = await Promise.resolve(promisedPeerId);
+   let localnid = getNid('/ipns/'+peerid);
+   console.log('nid:',nid);
+   console.log('localnid:',localnid);
+   console.log('peerids:',peerids);
+   peerids[localnid] = {
+      'peerkey': peerid, "nickname": 'self', "trust": '1', "peerid": peerid };
 
-      if (typeof(peerids[nid]) != 'undefined') {
-         peerkey = peerids[nid]['peerkey'];
-         console.log('peerkey:',peerkey);
-         let [shard,hashkey] = shard_n_key(nss)
-            console.log('hashkey:',hashkey);
-         let brurl = '/ipns/'+peerkey+'/shards/'+shard+'/brindex.log'
-            console.log('brurl:',brurl);
-         let index_yaml = await ipfsGetFileContent(brurl);
-         let lines = index_yaml.split("\n");
-         let address = '/ipfs/QmU1u5ZiH7QFm3dxU8rBgF8FjnHaSYq5KyNePnyH64EVfy/404.htm';
-         for (line of lines) { 
-            let result = line.match(RegExp('^'+hashkey+': (.*)'));
-            if (result) {
-               address = result[1];
-            }
+   if (typeof(peerids[nid]) != 'undefined') {
+      peerkey = peerids[nid]['peerkey'];
+      console.log('peerkey:',peerkey);
+      let [shard,hashkey] = shard_n_key(nss)
+         console.log('hashkey:',hashkey);
+      let brurl = '/ipns/'+peerkey+'/shards/'+shard+'/brindex.log'
+         console.log('brurl:',brurl);
+      let index_yaml = await ipfsGetFileContent(brurl);
+      let lines = index_yaml.split("\n");
+      let address = '/ipfs/QmU1u5ZiH7QFm3dxU8rBgF8FjnHaSYq5KyNePnyH64EVfy/404.htm';
+      for (line of lines) { 
+         let result = line.match(RegExp('^'+hashkey+': (.*)'));
+         if (result) {
+            address = result[1];
          }
-         console.log('address: ',address)
-         document.location = gw_url + address
       }
+      console.log('address: ',address);
+      a = document.getElementById('jump');
+      a.href= gw_url + address;
+      a.innerHTML = address;
+      document.getElementById('resolve').innerHTML = 'RESOLVED TO';
+      document.getElementById('redirect').onclick = (ev => {
+        document.location.href = address;
+      });
+   }
 
 
 }
 main()
 
-
+function TBD(m) {
+  console.error(m)
+}
 
 </script>
