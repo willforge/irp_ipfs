@@ -162,7 +162,7 @@ function validateResp(resp) { // validate: OK ? text : json
              console.log('validateResp.ok.json: ',json);
              return json;
            } else {
-             console.log('validateResp.ok.text: ',text.replace(/\n/g,'\\n'));
+             console.log('validateResp.ok.text:',text.replace(/\n/g,'\\n').substr(0,78),'...');
              return text;
            }
         }));

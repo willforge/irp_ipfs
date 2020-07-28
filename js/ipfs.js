@@ -23,6 +23,7 @@ if (typeof(core) == 'undefined') {
   core['index'] = 'brindex.log'
   core['history'] = 'history.log'
   core['dir'] = '/.brings';
+  console.log('core:',core)
 }
 
 if (typeof(api_url) == 'undefined') {
@@ -122,10 +123,10 @@ async function ipfsPublish(pubpath) {
    let lhash = await ipfsLogAppend(indexlogf,record);
    console.log(callee+'.lhash:',lhash);
    let bhash = await getMFSFileHash(core.dir); // get hash of POR
+   console.log(callee+'.bhash:',bhash);
    // publish under self/peerid
-   let phash = await ipfsNamePublish('self','/ipfs/'+bhash);
-   console.log(callee+'.phash:',phash);
-   let ppath = '/ipfs/'+phash+'/'+pname;
+   let ppath = await ipfsNamePublish('self','/ipfs/'+bhash);
+   ppath += '/'+pname;
    console.log(callee+'.ppath:',ppath);
    return ppath;
 
@@ -135,7 +136,7 @@ function ipfsNamePublish(k,v) {
     var url = api_url + 'name/publish?key='+k+'&arg='+v+'&allow-offline=true&resolve=false';
     return fetchGetPostJson(url)
     .then(consLog('ipfsNamePublish'))
-    .then( json => { return json.Hash })
+    .then( json => { return json.Value })
     .catch(logError)
 }
 
