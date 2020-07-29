@@ -26,8 +26,8 @@
 <tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>from</th><th>trust</th>
 <th>nid</th><th>obs.</th><th>ping</th><th>remove</th>
 <tr><td>:idx</td>
-<td><img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
-<td class=nickname name=":key"><a class="nickname_link nodeco" href=resolver.html#urn::key:/my/identity/./public.yml>:nickname</a></td>
+<td><img class=thumbnail alt=":key" src=https://api.adorable.io/avatar/18/:peerkey.png></td>
+<td class=nickname id=":key"><a class="nickname_link nodeco" href=resolver.html#urn::key:/my/identity/./public.yml>:nickname</a></td>
 <td class=peerkey>:peerkey</td>
 <td><a class="fullname_link nodeco" href="http://localhost:8080/ipns/:peerkey" name=":peerkey" title=":shortpeerkey">:fullname</a></td>
 <td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
@@ -153,10 +153,15 @@ function displayTrust(value,row) {
 function get_current_key(el) {
    let [callee,caller] = functionNameJS();
    console.log(callee+'.input.el:',el)
-   let grandparent = el.parentNode.parentNode
+   let parent = el.parentNode
+   let grandparent = parent.parentNode
+   console.log(callee+'.parent:',parent)
+   console.log(callee+'.grandparent:',grandparent)
    let nickname = grandparent.getElementsByClassName('nickname_link')[0].innerHTML;
-   let key = grandparent.getElementsByClassName('nickname')[0].name; // used as key
+   let key = grandparent.getElementsByClassName('nickname')[0].id; // used as key
    let peerkey = grandparent.getElementsByClassName('peerkey')[0].innerHTML;
+   console.log(callee+'.key:',key)
+   console.log(callee+'.peerkey:',peerkey)
    return [grandparent,key,nickname,peerkey]
 }
 
@@ -176,12 +181,15 @@ async function ping(ev) {
 async function remove(ev) {
  let [callee,caller] = functionNameJS();
  let [gdparent,key,nickname,peerkey] = get_current_key(ev.target);
+ console.log(callee+'.remove.nickname:',nickname)
+ console.log(callee+'.remove.peerkey:',peerkey)
+ console.log(callee+'.remove.key:',key)
  delete friends[key];
  console.log(callee+'.friends:',friends)
  let yml = window.jsyaml.safeDump(friends)
  let hash = await ipfsWriteContent(PEERIDSFILE,"--- # friends list (yaml)\n"+yml)
  console.log(callee+'.yml',yml)
- display(friends)
+ //display(friends)
  
 }
  
@@ -189,18 +197,8 @@ async function remove(ev) {
 async function updateTrust(ev) {
    let [callee,caller] = functionNameJS();
    console.log(callee+'.input.ev:',ev)
-   let el = ev.target.parentNode.parentNode
-   console.log(callee+'.el:',el)
-   /* 
-   // /!\ hashkey: is unsalted
-   let key = hashkey('urn:ipns:'+peerid) // urn = urn:ipms:hashkey:/mfspath
-   console.log(callee+'.key:',key)
-   */
+   let [gdparent,key,nickname,peerkey] = get_current_key(ev.target);
    
-   let nickname = el.getElementsByClassName('nickname_link')[0].innerHTML;
-   let key = el.getElementsByClassName('nickname')[0].name; // used as key
-   let peerkey = el.getElementsByClassName('peerkey')[0].innerHTML;
-
    console.log(callee+'.nickname:',nickname)
    console.log(callee+'.key:',key)
    console.log(callee+'.peerkey:',peerkey)
