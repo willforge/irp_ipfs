@@ -189,7 +189,7 @@ async function remove(ev) {
  let yml = window.jsyaml.safeDump(friends)
  let hash = await ipfsWriteContent(PEERIDSFILE,"--- # friends list (yaml)\n"+yml)
  console.log(callee+'.yml',yml)
- //display(friends)
+ display(friends)
  
 }
  
@@ -231,6 +231,7 @@ async function addFriend(ev) {
    let yml = window.jsyaml.safeDump(friends)
    console.log('yml:',yml)
    let hash = await ipfsWriteContent(PEERIDSFILE,"--- # friends list (yaml)\n"+yml)
+   display(friends)
    
 }
 
