@@ -60,12 +60,12 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
     </td>
     <!-- urn:ipns:peerid:/mfs_path
          urn:ipms:publicname:/mfs_path : need to be register ...  !
-         urn:nid:/mfs_path w/ nid=hash(/ipns/peerid) or nid=hash(/dns/example.com)
+         urn:nid:/mfs_path w/ nid=hash(urn:ipns:peerid) or nid=hash(urn:dns:example.com)
 
          nid solely gives access to the (br)index.log (not the folder containing the data)
 
-      nid=hash(/ipns/peerid)
-      idxkey = hash(/mfs_dir/./path/file.txt) -> 
+      nid=hash(urn:ipns:peerid)
+      idxkey = hash(/mfs_dir/./path/file.txt) 
 
     -->
     <td class=perma_url><a class=perma_url_link href="#" title="permanent link">urn:nid:/mfs_path</a></td>
@@ -322,7 +322,7 @@ async function update_perma_url_link(item) {
    let perma_url_link = row.getElementsByClassName('perma_url_link')[0];
 
    console.log(callee+'.perma_url_link.href:',perma_url_link.href);
-   let ns36 = BigInt('0x'+sha256('/ipns/'+peerid)).toString(36).substr(0,13)
+   let ns36 = getNid('url:ipns:'+peerid)
    let urn = 'urn:' + ns36  + ':' + item.Path
    const qmresolver = 'QmThhn7niLeuEfCMXhS1SmYgNFobokPxsobveN7RXVeUpk'
    // perma_url_link.href= 'http://resolver.localhost:8080/ipfs/'+qmresolver+'/#'+urn 

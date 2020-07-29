@@ -61,8 +61,11 @@ if (typeof(peerid) == 'undefined') {
 }
 
 function getNid(string) {
-   let ns36 = BigInt('0x'+sha256(string)).toString(36).substr(0,13)
-   return ns36
+  let [callee, caller] = functionNameJS();
+  console.log(callee+'.input.string:',string)
+  let ns36 = BigInt('0x'+sha256(string)).toString(36).substr(0,13)
+  console.log(callee+'.ns36:',ns36)
+  return ns36
 }
 
 function shard_n_key(s) {
@@ -187,7 +190,7 @@ function ipfsGetContentHash(buf) {
 }
 
 function ipfsRmMFSFileUnless06(mfspath) {
-  if (ipfsversion.substr(0,3) == '0.6') {
+  if (ipfsversion == '0.6.0') {
     console.log('info: assumed truncates works !')
     return Promise.resolve('noop');
   } else {

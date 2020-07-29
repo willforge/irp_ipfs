@@ -23,11 +23,12 @@
 <div id=output>
 <h3>friends list</h3>
 <table id=friendstableid>
-<tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>from</th><th>trust</th><th>nid</th><th>obs.</th>
+<tr><th>#</th><th>pic.</th><th>nickname</th><th>peerkey</th><th>fullname</th><th>from</th><th>trust</th>
+<th>nid</th><th>obs.</th><th>ping</th><th>remove</th>
 <tr><td>:idx</td>
 <td><img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
-<td class=nickname title=":key" ><a href=resolver.html#urn::key:/my/identity/./public.yml>:nickname</a></td>
-<td><a class="peerkey nodeco" href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
+<td class=nickname name=":key"><a class="nickname_link nodeco" href=resolver.html#urn::key:/my/identity/./public.yml>:nickname</a></td>
+<td><a class="peerkey nodeco" href="http://localhost:8080/ipns/:peerkey" name=":peerkey" title=":shortpeerkey">:peerkey</td>
 <td>:fullname</td>
 <td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
 <td><select name=trust value=":trust" onchange="updateTrust(event)">
@@ -36,6 +37,8 @@
     </select></td>
 <td>:nid</td>
 <td>:obs</td>
+<td><button class=ping_button onclick="ping(event)">ping</button></td>
+<td><button class=remove_button onclick="remove(event)">remove</button></td>
 </table>
 </div>
 
@@ -45,8 +48,8 @@
 <script src="js/ipfs.js" type=text/javascript></script>
 
 <script type=text/javascript>
-const ff = '/my/friends/peerids.yml';
-console.log('ff:',ff)
+const PEERIDSFILE = '/my/friends/peerids.yml';
+console.log('PEERIDSFILE:',PEERIDSFILE)
 let friends = {}
 
 // detect when peerid is available and feed it to then...
@@ -76,12 +79,12 @@ load(window).then( _ => { // on window load ...
 
 
 async function main() {
-let yml = await getMFSFileContent(ff);
+let yml = await getMFSFileContent(PEERIDSFILE);
 //console.log('yml:',yml)
 if (typeof(yml.Code) == 'undefined') {
    friends = window.jsyaml.safeLoad(yml);
 } else {
-  friend = {};
+  friends = {};
 }
 console.log('friends:',friends)
 display(friends)
@@ -97,7 +100,7 @@ function display(friendsmap) {
   let [callee,caller] = functionNameJS();
   let table = document.getElementById('friendstableid')
   let pos = 1;
-  clear_table(table,pos);
+  clear_table(table,-2);
   let last = table.rows.length-1;
   let lastrow = table.rows[last];
   console.log('friendsmap:',friendsmap)
@@ -147,6 +150,42 @@ function displayTrust(value,row) {
 
 }
 
+function get_current_key(el) {
+   let [callee,caller] = functionNameJS();
+   console.log(callee+'.input.el:',el)
+   let grandparent = el.parentNode.parentNode
+   let nickname = grandparent.getElementsByClassName('nickname_link')[0].innerHTML;
+   let key = grandparent.getElementsByClassName('nickname')[0].name; // used as key
+   let peerkey = grandparent.getElementsByClassName('peerkey')[0].name;
+   return [grandparent,key,nickname,peerkey]
+}
+
+async function ping(ev) {
+ let [callee,caller] = functionNameJS();
+ let [gdparent,key,nickname,peerkey] = get_current_key(ev.target);
+ console.log(callee+'.gdparent:',gdparent)
+ console.log(callee+'.nickname:',nickname)
+ console.log(callee+'.peerkey:',peerkey)
+ console.log(callee+'.key:',key)
+ let url = api_url + 'ping?arg='+peerkey
+ //return fetchRespNoCatch(url)
+ return fetchGetPostText(url)
+ .then( obj => { console.log(callee+'.obj:',obj) })
+}
+
+async function remove(ev) {
+ let [callee,caller] = functionNameJS();
+ let [gdparent,key,nickname,peerkey] = get_current_key(ev.target);
+ delete friends[key];
+ console.log(callee+'.friends:',friends)
+ let yml = window.jsyaml.safeDump(friends)
+ let hash = await ipfsWriteContent(PEERIDSFILE,"--- # friends list (yaml)\n"+yml)
+ console.log(callee+'.yml',yml)
+ display(friends)
+ 
+}
+ 
+
 async function updateTrust(ev) {
    let [callee,caller] = functionNameJS();
    console.log(callee+'.input.ev:',ev)
@@ -158,9 +197,9 @@ async function updateTrust(ev) {
    console.log(callee+'.key:',key)
    */
    
-   let nickname = el.getElementsByClassName('nickname')[0].innerHTML;
-   let key = el.getElementsByClassName('nickname')[0].title;
-   let peerkey = el.getElementsByClassName('peerkey')[0].title;
+   let nickname = el.getElementsByClassName('nickname_link')[0].innerHTML;
+   let key = el.getElementsByClassName('nickname')[0].name; // used as key
+   let peerkey = el.getElementsByClassName('peerkey')[0].name;
 
    console.log(callee+'.nickname:',nickname)
    console.log(callee+'.key:',key)
@@ -172,7 +211,7 @@ async function updateTrust(ev) {
    console.log(callee+'.record.trust.after:',friends[key].trust)
    
    let yml = window.jsyaml.safeDump(friends)
-   let hash = await ipfsWriteContent(ff,"--- # friends list (yaml)\n"+yml)
+   let hash = await ipfsWriteContent(PEERIDSFILE,"--- # friends list (yaml)\n"+yml)
  
 }
 
@@ -193,15 +232,16 @@ async function addFriend(ev) {
    console.log('friends:',friends)
    let yml = window.jsyaml.safeDump(friends)
    console.log('yml:',yml)
-   let hash = await ipfsWriteContent(ff,"--- # friends list (yaml)\n"+yml)
+   let hash = await ipfsWriteContent(PEERIDSFILE,"--- # friends list (yaml)\n"+yml)
    
 }
 
 function clear_table(t,pos) {
    console.log('t:',t)
-   t.rows[pos].style.display=''; 
-   //t.rows[pos].style.display='none'; 
-   for (i = t.rows.length-1; i > pos; i--) {
+   let p = t.rows.length+pos+1
+   t.rows[p].style.display=''; 
+   //t.rows[p].style.display='none'; 
+   for (i = p-1; i > 0; i--) {
       t.deleteRow(i)
    }
    console.log('nrow after delete:',t.rows.length)

@@ -3,7 +3,7 @@ h1,h2,h3 {
 }
 a.nodeco {
  text-decoration: none;
- color: darkgrey;
+ color: #234;
 }
 textarea#file_contentid {
   width: 90vw;

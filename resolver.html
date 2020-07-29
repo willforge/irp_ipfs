@@ -77,7 +77,7 @@ async function resolver(uri) {
    }
 
    var peerid = await Promise.resolve(promisedPeerId);
-   let localnid = getNid('/ipns/'+peerid);
+   let localnid = getNid('urn:ipns:'+peerid);
    console.log('localnid:',localnid);
    console.log('peerids:',peerids);
    peerids[localnid] = {
