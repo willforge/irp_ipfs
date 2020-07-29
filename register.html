@@ -10,12 +10,12 @@
 <br><input type=text name=fullname value="Michel Combes" placeholder="fullname">
 <select name=trust><option value=1>trusted</option><option value=0 selected>untrusted</option></select>
 <br><input type=text name=city value="" placeholder="city">
-<br><input type=text name=peerkey value="QmcfHufAK9ErQ9ZKJF7YX68KntYYBJngkGDoVKcZEJyRve" placeholder="peerkey">
+<br><input type=text name=peerkey size=48 value="QmcfHufAK9ErQ9ZKJF7YX68KntYYBJngkGDoVKcZEJyRve" placeholder="peerkey">
 <br><input type=text name=obs value="" placeholder="observation">
 <br><input type=text name=phone value="" placeholder="phone number">
 <br><input type=text name=email value="" placeholder="email">
 <br><input type=text name=last4 value="" placeholder="last 4 digits of physical ID">
-<br><input type=text name=peerid value=":peerid" placeholder="peerid" disabled>
+<br><input type=text name=peerid size=48 value=":peerid" placeholder="peerid" disabled>
 <br><button type=button onclick="addFriend(event)">add</button>
 </form>
 <br>
@@ -28,8 +28,8 @@
 <tr><td>:idx</td>
 <td><img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
 <td class=nickname name=":key"><a class="nickname_link nodeco" href=resolver.html#urn::key:/my/identity/./public.yml>:nickname</a></td>
-<td><a class="peerkey nodeco" href="http://localhost:8080/ipns/:peerkey" name=":peerkey" title=":shortpeerkey">:peerkey</td>
-<td>:fullname</td>
+<td class=peerkey>:peerkey</td>
+<td><a class="fullname_link nodeco" href="http://localhost:8080/ipns/:peerkey" name=":peerkey" title=":shortpeerkey">:fullname</a></td>
 <td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
 <td><select name=trust value=":trust" onchange="updateTrust(event)">
     <option value=0>untrusted</option>
@@ -156,7 +156,7 @@ function get_current_key(el) {
    let grandparent = el.parentNode.parentNode
    let nickname = grandparent.getElementsByClassName('nickname_link')[0].innerHTML;
    let key = grandparent.getElementsByClassName('nickname')[0].name; // used as key
-   let peerkey = grandparent.getElementsByClassName('peerkey')[0].name;
+   let peerkey = grandparent.getElementsByClassName('peerkey')[0].innerHTML;
    return [grandparent,key,nickname,peerkey]
 }
 
@@ -199,7 +199,7 @@ async function updateTrust(ev) {
    
    let nickname = el.getElementsByClassName('nickname_link')[0].innerHTML;
    let key = el.getElementsByClassName('nickname')[0].name; // used as key
-   let peerkey = el.getElementsByClassName('peerkey')[0].name;
+   let peerkey = el.getElementsByClassName('peerkey')[0].innerHTML;
 
    console.log(callee+'.nickname:',nickname)
    console.log(callee+'.key:',key)
