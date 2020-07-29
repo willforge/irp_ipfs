@@ -17,7 +17,7 @@
 <br><input type=text name=last4 value="" placeholder="last 4 digits of physical ID">
 <br><input type=text name=peerid value=":peerid" placeholder="peerid" disabled>
 <br><button type=button onclick="addFriend(event)">add</button>
-</form>Object
+</form>
 <br>
 
 <div id=output>
@@ -27,7 +27,7 @@
 <tr><td>:idx</td>
 <td><img class=thumbnail src=https://api.adorable.io/avatar/18/:peerkey.png></td>
 <td class=nickname title=":key" ><a href=resolver.html#urn::key:/my/identity/./public.yml>:nickname</a></td>
-<td><a class=peerkey href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
+<td><a class="peerkey nodeco" href=http://localhost:8080/ipns/:peerkey title=:peerkey>:shortpeerkey</td>
 <td>:fullname</td>
 <td><a href=http://localhost:8080/ipns/:peerid title=:peerid>:shortpeerid</td>
 <td><select name=trust value=":trust" onchange="updateTrust(event)">
