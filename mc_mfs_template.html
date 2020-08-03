@@ -45,8 +45,8 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
 <div id=directory_divid>
 <table id=directory_contentid border=1>
     <thead>
-    <tr><th colspan=6><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
-    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th><th>publish</th><th>permanent link</th></tr>
+    <tr><th colspan=7><h4 id="directory_pathid" class="whiteOnDarkBlue">directoryPath</h4></th></tr>
+    <tr><th>pin</th><th>type</th><th>name</th><th>hash</th><th>publish</th><th>permanent link</th><th>remove</th></tr>
     </thead>
     <tbody>
     <tr id=dir_row0id class=ls_row">
@@ -56,7 +56,7 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
     <td class=file_type>fileType</td>
     <td class=file_name><a class=file_name_click href=#>fileName</a></td>
     <td class=file_hash><a class="file_hash_link nodeco" href=#>QmHash</a></td>
-		<td class=file_publish><button class=file_publish_click>Publish</button>
+    <td class=file_publish><button class=file_publish_click>Publish</button>
     </td>
     <!-- urn:ipns:peerid:/mfs_path
          urn:ipms:publicname:/mfs_path : need to be register ...  !
@@ -69,6 +69,7 @@ add: <input type="file"  name="filepath" id="FakePathId" onchange="preFillFileNa
 
     -->
     <td class=perma_url><a class=perma_url_link href="#" title="permanent link">urn:nid:/mfs_path</a></td>
+    <td class=remove><button class=remove_click>Remove</button></td>
     </tr>
     </tbody>
 </table>
@@ -242,6 +243,7 @@ async function display_directory_content(cur_item) {
       let size = item.Size;
 
       item.FullStatus = await getPinStatus(hash);
+      console.log(callee+'.item.FullStatus: ',item.FullStatus);
 
       if (type == 'Directory') { // append a trailing / to directories
         filename += '/';
@@ -285,9 +287,9 @@ function display_row(item) {
    let file_name_click=newrow.getElementsByClassName('file_name_click')[0];
    file_name_click.onclick = function() {
       document.getElementById('mfs_pathinputid').value = item.Path
-         //stored['QmHash'] = item.Hash
-         stored['curItem'] = item
-         display();
+	 //stored['QmHash'] = item.Hash
+	 stored['curItem'] = item
+	 display();
    }
    file_name_click.innerHTML = item.Name;
 
@@ -305,6 +307,13 @@ function display_row(item) {
       console.log(callee+'.path:',path);
       return path
    }
+   let remove_click = newrow.getElementsByClassName('remove_click')[0];
+   let remove_click.onclick = async function() {
+      let status = await ipfsRmMFSFile(item.Path);
+      display();
+   }
+
+
 
 
    console.log(callee+'.result.newrow: ',newrow);
